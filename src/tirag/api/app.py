@@ -309,7 +309,12 @@ def create_app(
         summary="Index statistics",
     )
     def stats(principal: Annotated[Principal, Depends(rate_limited)]) -> StatsResponse:
-        s = service.store.stats()
+        try:
+            s = service.store.stats()
+        except Exception as exc:  # backend failure must look like the other endpoints, not a 500
+            log.warning("stats backend failure", exc_info=True)
+            metrics.UPSTREAM_ERRORS.inc()
+            raise HTTPException(502, "upstream service unavailable") from exc
         return StatsResponse(**s.__dict__)
 
     return app

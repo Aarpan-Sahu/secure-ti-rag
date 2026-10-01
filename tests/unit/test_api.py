@@ -262,12 +262,24 @@ def test_llm_outage_maps_to_502_without_internals(fixture_service, creds, script
 
 
 def test_unexpected_errors_are_masked_as_500(fixture_service, creds, monkeypatch) -> None:
+    client, _ = build(fixture_service, creds)
+    monkeypatch.setattr(
+        fixture_service.store, "ping", lambda: (_ for _ in ()).throw(RuntimeError("secret detail"))
+    )
+    resp = client.get("/readyz")
+    assert resp.status_code == 500 and "secret detail" not in resp.text
+    assert resp.json()["error"]["request_id"]
+
+
+def test_stats_backend_failure_maps_to_502_without_internals(
+    fixture_service, creds, monkeypatch
+) -> None:
     client, h = build(fixture_service, creds)
     monkeypatch.setattr(
         fixture_service.store, "stats", lambda: (_ for _ in ()).throw(RuntimeError("secret detail"))
     )
     resp = client.get("/v1/stats", headers=h["alice"])
-    assert resp.status_code == 500 and "secret detail" not in resp.text
+    assert resp.status_code == 502 and "secret detail" not in resp.text
     assert resp.json()["error"]["request_id"]
 
 
