@@ -16,7 +16,7 @@ MISP/OpenCTI. The table is deliberately blunt.
 | Area | State |
 |---|---|
 | Application (ingestion, chunking, embeddings, hybrid retrieval, guardrails, API, CLI) | **Implemented and tested** |
-| Test suite | **258 tests**, 94.6 % line+branch coverage, run against a real PostgreSQL + pgvector (embedded) |
+| Test suite | **259 tests**, 94.6 % line+branch coverage, run against a real PostgreSQL + pgvector (embedded) |
 | MISP / OpenCTI connectors | Implemented against the documented API shapes and tested against **mock servers**; **never run against a live MISP or OpenCTI** |
 | Embeddings / LLM | `hash` embedder and `extractive` answerer are **offline stand-ins** for tests/CI/demo (not semantic, not generative). The Bedrock providers are implemented and unit-tested with fakes; **never exercised against real Bedrock** (`tirag eval --live` is provided for that) |
 | Dockerfile / compose | Written; **never built** (no Docker daemon in the build sandbox). CI builds, scans and smoke-tests the image |
@@ -188,7 +188,7 @@ stripping, defanging). Details: `docs/security.md`, `security/threat-model.md`.
 
 | Check | Result |
 |---|---|
-| `pytest` (unit, API, AI-security, pgvector integration, mock-feeds HTTP) | 258 passed |
+| `pytest` (unit, API, AI-security, pgvector integration, mock-feeds HTTP) | 259 passed |
 | Coverage | 94.6 % (gate: 85 %) |
 | `tirag eval` (25 golden cases, offline stand-ins) | hit-rate@8 = 1.00, MRR = 0.82, TLP leaks 0, poison leaks 0, injection block rate 1.00, refusal accuracy 1.00 |
 | `scripts/smoke_test.py` against a live uvicorn + pgvector server | 16/16 checks |
