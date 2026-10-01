@@ -1,0 +1,108 @@
+# Local development stack: PostgreSQL + pgvector, the API, and optional demo/feeds profiles.
+#
+#   cp .env.example .env && edit TIRAG_DB_PASSWORD        (compose refuses to start without it)
+#   docker compose -f docker/docker-compose.yml up --build -d db api
+#   docker compose -f docker/docker-compose.yml --profile demo run --rm ingest-fixtures
+#   docker compose -f docker/docker-compose.yml --profile feeds up -d mock-feeds   # HTTP mock MISP/OpenCTI
+#
+# Nothing here is for production: auth is API-key based but the DB is on a private compose network
+# without TLS. Production runs on ECS/RDS (see infrastructure/terraform).
+
+name: tirag
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 256
+  tmpfs: ["/tmp:size=64m,mode=1777"]
+
+x-app-env: &app-env
+  TIRAG_ENV: dev
+  TIRAG_STORE_BACKEND: pgvector
+  TIRAG_DB_HOST: db
+  TIRAG_DB_NAME: tirag
+  TIRAG_DB_USER: tirag
+  TIRAG_DB_PASSWORD: ${TIRAG_DB_PASSWORD:?set TIRAG_DB_PASSWORD in .env}
+  TIRAG_DB_SSLMODE: disable # private compose network only
+  TIRAG_AUTO_MIGRATE: "true"
+  TIRAG_AUTH_MODE: ${TIRAG_AUTH_MODE:-apikey}
+  TIRAG_API_KEYS_JSON: ${TIRAG_API_KEYS_JSON:-[]}
+  TIRAG_EMBEDDING_PROVIDER: ${TIRAG_EMBEDDING_PROVIDER:-hash}
+  TIRAG_EMBEDDING_DIM: ${TIRAG_EMBEDDING_DIM:-384}
+  TIRAG_LLM_PROVIDER: ${TIRAG_LLM_PROVIDER:-extractive}
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: tirag
+      POSTGRES_USER: tirag
+      POSTGRES_PASSWORD: ${TIRAG_DB_PASSWORD:?set TIRAG_DB_PASSWORD in .env}
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tirag -d tirag"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: tirag:local
+    environment: *app-env
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["127.0.0.1:8080:8080"] # loopback only
+    networks: [backend]
+    <<: *hardening
+    mem_limit: 1g
+    cpus: 1.0
+    restart: unless-stopped
+
+  # One-shot: load the synthetic demo data into the database (dev only; refused in staging/prod).
+  ingest-fixtures:
+    image: tirag:local
+    profiles: ["demo"]
+    command: ["ingest", "--source", "fixtures"]
+    environment: *app-env
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [backend]
+    <<: *hardening
+
+  # One-shot: ingest from real MISP / OpenCTI (set TIRAG_MISP_* / TIRAG_OPENCTI_* in .env).
+  ingest:
+    image: tirag:local
+    profiles: ["ingest"]
+    command: ["ingest", "--source", "all"]
+    environment:
+      <<: *app-env
+      TIRAG_MISP_URL: ${TIRAG_MISP_URL:-}
+      TIRAG_MISP_API_KEY: ${TIRAG_MISP_API_KEY:-}
+      TIRAG_OPENCTI_URL: ${TIRAG_OPENCTI_URL:-}
+      TIRAG_OPENCTI_TOKEN: ${TIRAG_OPENCTI_TOKEN:-}
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [backend, egress]
+    <<: *hardening
+
+  # HTTP stand-in for MISP + OpenCTI backed by the synthetic fixtures (for connector testing).
+  mock-feeds:
+    image: tirag:local
+    profiles: ["feeds"]
+    entrypoint: ["python", "-m", "uvicorn", "tools.mock_feeds_server:app", "--host", "0.0.0.0", "--port", "9000"]
+    networks: [backend]
+    <<: *hardening
+
+networks:
+  backend:
+    internal: true # no route to the internet
+  egress: {} # only the ingest job joins this network
+
+volumes:
+  pgdata:
