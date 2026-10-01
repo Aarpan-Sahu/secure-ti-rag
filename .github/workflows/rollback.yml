@@ -4,6 +4,7 @@ name: Rollback
 # environment protection (approval for prod) and the same verification as a normal deployment.
 
 on:
+  # checkov:skip=CKV_GHA_7: rollback deliberately takes an already-built image tag and never builds. The tag is validated by Terraform (variable image_tag) and an ECR existence check; prod requires environment approval.
   workflow_dispatch:
     inputs:
       environment:

@@ -1,0 +1,9 @@
+# Security- and deployment-sensitive paths require review from the owners below.
+# Replace @OWNER with your GitHub user or team before enabling "Require review from Code Owners".
+*                                  @OWNER
+/infrastructure/                   @OWNER
+/.github/                          @OWNER
+/docker/                           @OWNER
+/src/tirag/security/               @OWNER
+/src/tirag/rag/                    @OWNER
+/src/tirag/store/                  @OWNER
