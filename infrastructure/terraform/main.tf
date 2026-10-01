@@ -13,6 +13,20 @@ locals {
   )
 }
 
+# Fail at plan time (not half-way through an apply) when the HTTPS listener could not get a certificate.
+resource "terraform_data" "input_checks" {
+  lifecycle {
+    precondition {
+      condition     = var.route53_zone_id != null || var.certificate_arn != null
+      error_message = "Set route53_zone_id (Terraform creates and validates the certificate) or certificate_arn (existing ACM certificate)."
+    }
+    precondition {
+      condition     = length(var.alb_ingress_cidrs) > 0
+      error_message = "alb_ingress_cidrs is empty: the load balancer would accept no traffic. List the CIDRs allowed to reach the API."
+    }
+  }
+}
+
 # --- encryption key (logs, secrets, RDS, SNS, backups) ----------------------------------------------
 data "aws_iam_policy_document" "kms" {
   #checkov:skip=CKV_AWS_109: standard key policy: account root delegates to IAM
