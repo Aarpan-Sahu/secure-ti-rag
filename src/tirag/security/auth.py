@@ -112,12 +112,15 @@ class ApiKeyAuthenticator(Authenticator):
 
 class OidcAuthenticator(Authenticator):
     def __init__(self, settings: Settings, jwks_client: PyJWKClient | None = None) -> None:
-        assert settings.oidc_jwks_url  # validated by Settings
+        if not settings.oidc_jwks_url:  # also validated by Settings; fail closed regardless
+            raise ValueError("OIDC JWKS URL is required")
         self._issuer = settings.oidc_issuer
         self._audience = settings.oidc_audience
         self._role_claim = settings.oidc_role_claim
         self._tlp_claim = settings.oidc_tlp_claim
-        self._jwks = jwks_client or PyJWKClient(settings.oidc_jwks_url, cache_keys=True, lifespan=3600)
+        self._jwks = jwks_client or PyJWKClient(
+            settings.oidc_jwks_url, cache_keys=True, lifespan=3600
+        )
 
     def authenticate(self, authorization: str | None) -> Principal:
         token = _bearer(authorization)

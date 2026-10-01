@@ -42,6 +42,8 @@ class RateLimiter:
 
     def _evict_if_needed(self) -> None:
         if len(self._buckets) > self._max_buckets:
-            oldest = sorted(self._buckets.items(), key=lambda kv: kv[1][1])[: self._max_buckets // 10]
+            oldest = sorted(self._buckets.items(), key=lambda kv: kv[1][1])[
+                : self._max_buckets // 10
+            ]
             for key, _ in oldest:
                 self._buckets.pop(key, None)

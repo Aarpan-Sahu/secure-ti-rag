@@ -29,14 +29,19 @@ SECURITY_HEADERS: list[tuple[bytes, bytes]] = [
 
 # The interactive docs need to load their own assets; relax CSP for those paths only.
 _DOCS_PATHS = ("/docs", "/redoc", "/openapi.json")
-_DOCS_CSP = (
-    b"default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-    b"script-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+_DOCS_CSP = (  # Swagger UI loads its assets from jsDelivr; docs are disabled in prod
+    b"default-src 'self'; img-src 'self' data: https://fastapi.tiangolo.com; "
+    b"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+    b"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; frame-ancestors 'none'"
 )
 
 
-class BodyTooLarge(Exception):
-    pass
+class BodyTooLarge(BaseException):
+    """Raised from ``receive`` when a streamed body exceeds the limit.
+
+    It deliberately derives from ``BaseException``: FastAPI wraps body parsing in
+    ``except Exception`` and would otherwise turn it into a generic 400.
+    """
 
 
 class RequestContextMiddleware:
@@ -83,7 +88,9 @@ class RequestContextMiddleware:
                 existing = {k.lower() for k, _ in message.get("headers", [])}
                 extra = [(k, v) for k, v in SECURITY_HEADERS if k not in existing]
                 if path.startswith(_DOCS_PATHS):
-                    extra = [(k, _DOCS_CSP if k == b"content-security-policy" else v) for k, v in extra]
+                    extra = [
+                        (k, _DOCS_CSP if k == b"content-security-policy" else v) for k, v in extra
+                    ]
                 extra.append((b"x-request-id", request_id.encode()))
                 message = {**message, "headers": [*message.get("headers", []), *extra]}
             await send(message)

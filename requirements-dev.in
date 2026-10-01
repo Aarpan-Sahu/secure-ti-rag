@@ -1,0 +1,8 @@
+# Dev / CI tooling. Lock: pip-compile --generate-hashes --strip-extras -c requirements.txt -o requirements-dev.txt requirements-dev.in
+-c requirements.txt
+pytest
+pytest-cov
+ruff
+bandit
+pip-audit
+pgserver

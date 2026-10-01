@@ -1,12 +1,12 @@
 """Command-line interface: ``tirag <command>``.
 
-    tirag db-init                       create the schema (pgvector backend)
-    tirag ingest --source fixtures      ingest synthetic demo data (dev only)
-    tirag ingest --source all --full    ingest MISP + OpenCTI
-    tirag serve                         run the API with uvicorn
-    tirag ask "question"                ask from the terminal (clearance via --tlp)
-    tirag eval                          run the offline RAG evaluation harness
-    tirag keygen --name alice           mint an API key and its configuration entry
+tirag db-init                       create the schema (pgvector backend)
+tirag ingest --source fixtures      ingest synthetic demo data (dev only)
+tirag ingest --source all --full    ingest MISP + OpenCTI
+tirag serve                         run the API with uvicorn
+tirag ask "question"                ask from the terminal (clearance via --tlp)
+tirag eval                          run the offline RAG evaluation harness
+tirag keygen --name alice           mint an API key and its configuration entry
 """
 
 from __future__ import annotations
@@ -130,7 +130,9 @@ def cmd_keygen(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="tirag", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        prog="tirag", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("db-init", help="create database schema").set_defaults(func=cmd_db_init)
@@ -154,7 +156,9 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("eval", help="run the offline RAG evaluation")
     p.add_argument("--golden", default="eval/golden_set.json")
     p.add_argument("--min-hit-rate", type=float, default=0.85)
-    p.add_argument("--live", action="store_true", help="use the embedding/LLM providers from the environment")
+    p.add_argument(
+        "--live", action="store_true", help="use the embedding/LLM providers from the environment"
+    )
     p.set_defaults(func=cmd_eval)
 
     p = sub.add_parser("keygen", help="mint an API key")

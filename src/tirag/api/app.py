@@ -1,6 +1,8 @@
-"""FastAPI application factory."""
+"""FastAPI application factory.
 
-from __future__ import annotations
+Note: this module deliberately does not use ``from __future__ import annotations``; FastAPI must
+evaluate the ``Annotated[..., Depends(local_function)]`` annotations of the nested route handlers.
+"""
 
 import logging
 from collections.abc import AsyncIterator, Callable
@@ -35,7 +37,7 @@ from tirag.embeddings import build_embeddings
 from tirag.llm import build_llm
 from tirag.logging_setup import configure_logging
 from tirag.rag.chain import Clearance, GuardrailViolation, RAGService, UpstreamError
-from tirag.security.auth import AuthError, Authenticator, Principal, build_authenticator
+from tirag.security.auth import Authenticator, AuthError, Principal, build_authenticator
 from tirag.security.iocs import defang_text
 from tirag.security.ratelimit import RateLimiter
 from tirag.store import build_store
@@ -53,7 +55,9 @@ def build_service(settings: Settings) -> RAGService:
     return RAGService(store, build_embeddings(settings), build_llm(settings), settings)
 
 
-def _error(status: int, code: str, message: str, request: Request, headers: dict[str, str] | None = None):
+def _error(
+    status: int, code: str, message: str, request: Request, headers: dict[str, str] | None = None
+):
     rid = getattr(request.state, "request_id", "-")
     return JSONResponse(
         status_code=status,
@@ -73,7 +77,9 @@ def create_app(
     service = service or build_service(settings)
     authenticator = authenticator or build_authenticator(settings)
     limiter_kwargs = {"clock": clock} if clock else {}
-    limiter = RateLimiter(settings.rate_limit_per_minute, settings.rate_limit_burst, **limiter_kwargs)
+    limiter = RateLimiter(
+        settings.rate_limit_per_minute, settings.rate_limit_burst, **limiter_kwargs
+    )
     auth_fail_limiter = RateLimiter(20, 10, **limiter_kwargs)
 
     @asynccontextmanager
@@ -109,16 +115,26 @@ def create_app(
     async def _auth_error(request: Request, exc: AuthError):
         metrics.AUTH_FAILURES.labels("forbidden" if exc.status == 403 else "unauthenticated").inc()
         headers = {"WWW-Authenticate": "Bearer"} if exc.status == 401 else None
-        return _error(exc.status, "unauthorized" if exc.status == 401 else "forbidden", exc.message, request, headers)
+        return _error(
+            exc.status,
+            "unauthorized" if exc.status == 401 else "forbidden",
+            exc.message,
+            request,
+            headers,
+        )
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error(request: Request, exc: RequestValidationError):
-        detail = "; ".join(f"{'.'.join(map(str, e['loc'][1:]))}: {e['msg']}" for e in exc.errors())[:300]
+        detail = "; ".join(f"{'.'.join(map(str, e['loc'][1:]))}: {e['msg']}" for e in exc.errors())[
+            :300
+        ]
         return _error(422, "invalid_request", detail or "invalid request", request)
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(request: Request, exc: StarletteHTTPException):
-        return _error(exc.status_code, "http_error", str(exc.detail), request, getattr(exc, "headers", None))
+        return _error(
+            exc.status_code, "http_error", str(exc.detail), request, getattr(exc, "headers", None)
+        )
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception):
@@ -128,7 +144,7 @@ def create_app(
     # --- dependencies ----------------------------------------------------------------------
     def authenticated(
         request: Request,
-        _: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)] = None,
+        credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)] = None,
     ) -> Principal:
         ip = request.client.host if request.client else "unknown"
         try:
@@ -138,7 +154,9 @@ def create_app(
             log.warning("authentication failed", extra={"client": ip, "reason": exc.message})
             if not allowed:
                 metrics.RATE_LIMITED.inc()
-                raise HTTPException(429, "too many failed attempts", headers={"Retry-After": str(int(retry) + 1)}) from exc
+                raise HTTPException(
+                    429, "too many failed attempts", headers={"Retry-After": str(int(retry) + 1)}
+                ) from exc
             raise
         return principal
 
@@ -146,7 +164,9 @@ def create_app(
         allowed, retry = limiter.check(principal.name)
         if not allowed:
             metrics.RATE_LIMITED.inc()
-            raise HTTPException(429, "rate limit exceeded", headers={"Retry-After": str(int(retry) + 1)})
+            raise HTTPException(
+                429, "rate limit exceeded", headers={"Retry-After": str(int(retry) + 1)}
+            )
         return principal
 
     def admin_only(principal: Annotated[Principal, Depends(authenticated)]) -> Principal:
@@ -177,7 +197,7 @@ def create_app(
         )
 
     @app.get("/metrics", tags=["ops"], include_in_schema=False)
-    def prometheus_metrics(_: Annotated[Principal, Depends(admin_only)]) -> Response:
+    def prometheus_metrics(principal: Annotated[Principal, Depends(admin_only)]) -> Response:
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
     # --- API -------------------------------------------------------------------------------
@@ -188,7 +208,9 @@ def create_app(
             sources=frozenset(body.sources) if body.sources else None,
         )
 
-    def _audit(principal: Principal, request: Request, question: str, event: str, **fields: object) -> None:
+    def _audit(
+        principal: Principal, request: Request, question: str, event: str, **fields: object
+    ) -> None:
         import hashlib
 
         record = {
@@ -204,10 +226,16 @@ def create_app(
             record["query"] = question
         audit_log.info(event, extra=record)
 
-    @app.post("/v1/query", response_model=QueryResponse, tags=["rag"], responses=errors,
-              summary="Ask a question; get a cited, grounded answer")
-    def query(body: QueryRequest, request: Request,
-              principal: Annotated[Principal, Depends(rate_limited)]) -> QueryResponse:
+    @app.post(
+        "/v1/query",
+        response_model=QueryResponse,
+        tags=["rag"],
+        responses=errors,
+        summary="Ask a question; get a cited, grounded answer",
+    )
+    def query(
+        body: QueryRequest, request: Request, principal: Annotated[Principal, Depends(rate_limited)]
+    ) -> QueryResponse:
         try:
             result = service.answer(body.question, _clearance(principal, body), body.top_k)
         except GuardrailViolation as exc:
@@ -227,9 +255,17 @@ def create_app(
         metrics.RETRIEVED_CHUNKS.observe(result.retrieved)
         for flag in result.flags:
             metrics.GUARDRAIL_FLAGS.labels(flag).inc()
-        _audit(principal, request, body.question, "query", grounded=result.grounded,
-               retrieved=result.retrieved, flags=result.flags, chunk_ids=result.chunk_ids,
-               latency_ms=result.latency_ms)
+        _audit(
+            principal,
+            request,
+            body.question,
+            "query",
+            grounded=result.grounded,
+            retrieved=result.retrieved,
+            flags=result.flags,
+            chunk_ids=result.chunk_ids,
+            latency_ms=result.latency_ms,
+        )
         return QueryResponse(
             request_id=request.state.request_id,
             answer=result.answer,
@@ -240,10 +276,18 @@ def create_app(
             latency_ms=result.latency_ms,
         )
 
-    @app.post("/v1/search", response_model=SearchResponse, tags=["rag"], responses=errors,
-              summary="Retrieval only (no LLM): ranked evidence chunks")
-    def search(body: SearchRequest, request: Request,
-               principal: Annotated[Principal, Depends(rate_limited)]) -> SearchResponse:
+    @app.post(
+        "/v1/search",
+        response_model=SearchResponse,
+        tags=["rag"],
+        responses=errors,
+        summary="Retrieval only (no LLM): ranked evidence chunks",
+    )
+    def search(
+        body: SearchRequest,
+        request: Request,
+        principal: Annotated[Principal, Depends(rate_limited)],
+    ) -> SearchResponse:
         try:
             docs = service.search(body.question, _clearance(principal, body), body.top_k)
         except GuardrailViolation as exc:
@@ -253,11 +297,18 @@ def create_app(
             metrics.UPSTREAM_ERRORS.inc()
             raise HTTPException(502, "upstream service unavailable") from exc
         _audit(principal, request, body.question, "search", retrieved=len(docs))
-        return SearchResponse(request_id=request.state.request_id, hits=[_hit(d, settings) for d in docs])
+        return SearchResponse(
+            request_id=request.state.request_id, hits=[_hit(d, settings) for d in docs]
+        )
 
-    @app.get("/v1/stats", response_model=StatsResponse, tags=["rag"], responses=errors,
-             summary="Index statistics")
-    def stats(_: Annotated[Principal, Depends(rate_limited)]) -> StatsResponse:
+    @app.get(
+        "/v1/stats",
+        response_model=StatsResponse,
+        tags=["rag"],
+        responses=errors,
+        summary="Index statistics",
+    )
+    def stats(principal: Annotated[Principal, Depends(rate_limited)]) -> StatsResponse:
         s = service.store.stats()
         return StatsResponse(**s.__dict__)
 
@@ -267,12 +318,15 @@ def create_app(
 def _hit(doc: Document, settings: Settings) -> SearchHit:
     md = doc.metadata
     body = doc.page_content.split("\n", 1)[-1][:300]
+    title = md.get("title")
+    if settings.defang_output and title:
+        title = defang_text(title)
     return SearchHit(
         chunk_id=md["chunk_id"],
         doc_id=md["doc_id"],
         source=md["source"],
         doc_type=md["doc_type"],
-        title=md.get("title"),
+        title=title,
         url=md.get("url"),
         tlp=md["tlp"],
         score=float(md.get("score", 0.0)),

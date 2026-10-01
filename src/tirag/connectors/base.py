@@ -66,5 +66,7 @@ def request_with_retry(
                 sleep(min(float(retry_after), 30.0))
                 continue
         if attempt < attempts - 1:
-            sleep(min(2**attempt, 20) + random.uniform(0, 0.25))  # noqa: S311 - jitter only
-    raise ConnectorError(f"request to {urlparse(url).netloc} failed after {attempts} attempts") from last_error
+            sleep(min(2**attempt, 20) + random.uniform(0, 0.25))  # noqa: S311  # nosec B311 - backoff jitter, not security-sensitive
+    raise ConnectorError(
+        f"request to {urlparse(url).netloc} failed after {attempts} attempts"
+    ) from last_error

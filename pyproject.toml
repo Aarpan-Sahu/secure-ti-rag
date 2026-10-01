@@ -52,7 +52,11 @@ src = ["src", "tests", "tools", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "S", "UP", "SIM", "C4", "RUF"]
-ignore = ["S101"] # asserts are fine in tests; app code does not use them for control flow
+ignore = [
+  "S101",  # asserts: used in tests; app code does not use them for control flow
+  "E501",  # line length is handled by `ruff format` (long prompt/regex strings are intentional)
+  "UP042", # str+Enum keeps JSON-friendly values and str() semantics
+]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "S311", "B011"]

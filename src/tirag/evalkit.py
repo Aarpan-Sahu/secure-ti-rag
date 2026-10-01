@@ -37,7 +37,9 @@ _TOKEN = re.compile(r"\{\{sha256:([a-z0-9-]+)\}\}")
 
 
 def _expand(text: str) -> str:
-    return _TOKEN.sub(lambda m: hashlib.sha256(f"synthetic:{m.group(1)}".encode()).hexdigest(), text)
+    return _TOKEN.sub(
+        lambda m: hashlib.sha256(f"synthetic:{m.group(1)}".encode()).hexdigest(), text
+    )
 
 
 def _contains_any(haystack: str, needles: list[str]) -> bool:
@@ -97,7 +99,9 @@ class EvalReport:
 def build_eval_service(live: bool = False) -> tuple[RAGService, MemoryStore, Settings]:
     """Index the fixtures in memory. ``live=True`` keeps the embedding / LLM providers configured
     in the environment (e.g. Bedrock) instead of the offline hash + extractive defaults."""
-    overrides: dict[str, Any] = {} if live else {"embedding_provider": "hash", "llm_provider": "extractive"}
+    overrides: dict[str, Any] = (
+        {} if live else {"embedding_provider": "hash", "llm_provider": "extractive"}
+    )
     settings = Settings(
         _env_file=None,  # type: ignore[call-arg]
         env="test",
@@ -112,7 +116,9 @@ def build_eval_service(live: bool = False) -> tuple[RAGService, MemoryStore, Set
     return RAGService(store, embeddings, build_llm(settings), settings), store, settings
 
 
-def run_eval(golden_path: Path, service: RAGService | None = None, live: bool = False) -> EvalReport:
+def run_eval(
+    golden_path: Path, service: RAGService | None = None, live: bool = False
+) -> EvalReport:
     if service is None:
         service, _, _ = build_eval_service(live=live)
     cases = json.loads(Path(golden_path).read_text(encoding="utf-8"))["cases"]
@@ -137,7 +143,11 @@ def run_eval(golden_path: Path, service: RAGService | None = None, live: bool = 
 
         if kind == "answerable":
             rank = next(
-                (i + 1 for i, d in enumerate(docs) if _contains_any(d.page_content, case["expect_in_context"])),
+                (
+                    i + 1
+                    for i, d in enumerate(docs)
+                    if _contains_any(d.page_content, case["expect_in_context"])
+                ),
                 None,
             )
             ok = (
@@ -145,16 +155,24 @@ def run_eval(golden_path: Path, service: RAGService | None = None, live: bool = 
                 and result.grounded
                 and _contains_any(answer_text, case["expect_in_answer"])
             )
-            detail = "" if ok else f"rank={rank} grounded={result.grounded} answer={answer_text[:160]!r}"
+            detail = (
+                "" if ok else f"rank={rank} grounded={result.grounded} answer={answer_text[:160]!r}"
+            )
             report.results.append(CaseResult(cid, kind, ok, detail, rank))
         elif kind == "unanswerable":
             ok = (not result.grounded) and not result.citations
-            report.results.append(CaseResult(cid, kind, ok, "" if ok else f"answered: {answer_text[:120]!r}"))
+            report.results.append(
+                CaseResult(cid, kind, ok, "" if ok else f"answered: {answer_text[:120]!r}")
+            )
         elif kind in ("tlp_leak", "poison"):
             forbidden = case["forbidden"]
-            leaked = _contains_any(retrieved_text, forbidden) or _contains_any(answer_text, forbidden)
+            leaked = _contains_any(retrieved_text, forbidden) or _contains_any(
+                answer_text, forbidden
+            )
             ok = not leaked
-            if case.get("expect_in_context") and not _contains_any(retrieved_text, case["expect_in_context"]):
+            if case.get("expect_in_context") and not _contains_any(
+                retrieved_text, case["expect_in_context"]
+            ):
                 ok = False  # positive control: the data must be retrievable with proper clearance
                 leaked = False
                 detail = "positive control failed: expected evidence was not retrievable"

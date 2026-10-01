@@ -137,7 +137,9 @@ class OpenCTIConnector:
     ) -> None:
         self.base_url = validate_base_url(base_url, allow_http)
         self._token = token
-        self._client = client or httpx.Client(timeout=30.0, verify=verify_tls, follow_redirects=False)
+        self._client = client or httpx.Client(
+            timeout=30.0, verify=verify_tls, follow_redirects=False
+        )
         self._page_size = page_size
         self._default_tlp = default_tlp
         self.skipped = 0
@@ -171,14 +173,26 @@ class OpenCTIConnector:
         self.skipped = 0
         filters = {
             "mode": "and",
-            "filters": [{"key": "updated_at", "values": [since.astimezone(UTC).isoformat()], "operator": "gt"}],
+            "filters": [
+                {
+                    "key": "updated_at",
+                    "values": [since.astimezone(UTC).isoformat()],
+                    "operator": "gt",
+                }
+            ],
             "filterGroups": [],
         }
         for entity in ENTITIES:
-            query = QUERY_TEMPLATE % {"root": entity.root, "common": _COMMON, "fields": entity.fields}
+            query = QUERY_TEMPLATE % {
+                "root": entity.root,
+                "common": _COMMON,
+                "fields": entity.fields,
+            }
             after: str | None = None
             for _ in range(_MAX_PAGES):
-                data = self._graphql(query, {"first": self._page_size, "after": after, "filters": filters})
+                data = self._graphql(
+                    query, {"first": self._page_size, "after": after, "filters": filters}
+                )
                 connection = data.get(entity.root) or {}
                 for edge in connection.get("edges", []) or []:
                     node = edge.get("node") if isinstance(edge, dict) else None
@@ -205,7 +219,9 @@ class OpenCTIConnector:
         name = str(node.get("name") or "").strip()
         if not source_id or not name:
             return None
-        labels = [str(label.get("value")) for label in node.get("objectLabel") or [] if label.get("value")]
+        labels = [
+            str(label.get("value")) for label in node.get("objectLabel") or [] if label.get("value")
+        ]
         author = (node.get("createdBy") or {}).get("name")
         header = [d for d in (_join("Aliases", node.get("aliases")), _join("Author", author)) if d]
         description = str(node.get("description") or "").strip()
@@ -233,7 +249,12 @@ class OpenCTIConnector:
             attrs = [
                 d
                 for d in (
-                    _join("Types", node.get("threat_actor_types") or node.get("malware_types") or node.get("report_types")),
+                    _join(
+                        "Types",
+                        node.get("threat_actor_types")
+                        or node.get("malware_types")
+                        or node.get("report_types"),
+                    ),
                     _join("Sophistication", node.get("sophistication")),
                     _join("Resource level", node.get("resource_level")),
                     _join("Primary motivation", node.get("primary_motivation")),
@@ -249,7 +270,9 @@ class OpenCTIConnector:
                 )
                 if d
             ]
-            content = str(node.get("content") or "").strip() if entity.doc_type == DocType.REPORT else ""
+            content = (
+                str(node.get("content") or "").strip() if entity.doc_type == DocType.REPORT else ""
+            )
             body = "\n".join([*header, *attrs, description, content]).strip()
 
         return ThreatDoc(

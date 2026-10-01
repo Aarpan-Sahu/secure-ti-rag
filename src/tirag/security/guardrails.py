@@ -20,11 +20,13 @@ from tirag.security.iocs import defang_text, extract_iocs, redact_unsupported_io
 from tirag.security.sanitize import clean_text, scan_injection
 
 IOC_PLACEHOLDER = "[unsupported-indicator-removed]"
-SECRET_PLACEHOLDER = "[redacted-secret]"
+SECRET_PLACEHOLDER = "[redacted-secret]"  # noqa: S105  # nosec B105 - marker text, not a credential
 
 _SECRET_PATTERNS = (
     re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"),
-    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----(?:.|\n)*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)"),
+    re.compile(
+        r"-----BEGIN [A-Z ]*PRIVATE KEY-----(?:.|\n)*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)"
+    ),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b"),
     re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}\b"),
     re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"),

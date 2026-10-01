@@ -262,8 +262,12 @@ class PgVectorStore(ChunkStore):
             chunks, docs = conn.execute(
                 "SELECT count(*), count(DISTINCT doc_id) FROM ti_chunks"
             ).fetchone()  # type: ignore[misc]
-            by_source = dict(conn.execute("SELECT source, count(*) FROM ti_chunks GROUP BY 1").fetchall())
-            by_type = dict(conn.execute("SELECT doc_type, count(*) FROM ti_chunks GROUP BY 1").fetchall())
+            by_source = dict(
+                conn.execute("SELECT source, count(*) FROM ti_chunks GROUP BY 1").fetchall()
+            )
+            by_type = dict(
+                conn.execute("SELECT doc_type, count(*) FROM ti_chunks GROUP BY 1").fetchall()
+            )
             quarantined = conn.execute("SELECT count(*) FROM ti_quarantine").fetchone()[0]  # type: ignore[index]
         return StoreStats(
             chunks=chunks,

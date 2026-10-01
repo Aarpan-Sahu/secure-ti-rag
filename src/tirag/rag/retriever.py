@@ -11,6 +11,7 @@ answers "insufficient evidence" without calling the LLM (cheaper, and no room to
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
@@ -21,8 +22,6 @@ from pydantic import ConfigDict
 
 from tirag.security.iocs import extract_iocs
 from tirag.store.base import ChunkStore, ScoredChunk, SearchFilter
-import math
-
 from tirag.text import content_terms, query_concepts, tokenize
 
 _RRF_K = 60
@@ -80,7 +79,9 @@ class HybridRetriever(BaseRetriever):
         per_doc: dict[str, int] = defaultdict(int)
         for cid, score in sorted(fused.items(), key=lambda kv: -kv[1]):
             doc = docs[cid]
-            if not self._relevant(cid, weights, pool_tokens[cid], seen_channels[cid], vector_scores):
+            if not self._relevant(
+                cid, weights, pool_tokens[cid], seen_channels[cid], vector_scores
+            ):
                 continue
             doc_id = doc.metadata["doc_id"]
             if per_doc[doc_id] >= self.max_chunks_per_doc:
@@ -93,7 +94,9 @@ class HybridRetriever(BaseRetriever):
                         **doc.metadata,
                         "score": round(score, 6),
                         "channels": sorted(seen_channels[cid]),
-                        "vector_score": round(vector_scores[cid], 4) if cid in vector_scores else None,
+                        "vector_score": round(vector_scores[cid], 4)
+                        if cid in vector_scores
+                        else None,
                     },
                 )
             )

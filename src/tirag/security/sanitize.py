@@ -69,7 +69,7 @@ _PATTERNS: tuple[_Pattern, ...] = (
     _p(
         "reveal_system_prompt",
         3,
-        r"\b(reveal|print|show|repeat|output|display|leak|disclose)\b[^.\n]{0,30}"
+        r"\b(reveal|print|show|repeat|output|display|leak|disclose)(?:s|ing|ed)?\b[^.\n]{0,30}"
         r"\b(system|hidden|initial|original|developer)\b[^.\n]{0,15}\b(prompt|instructions?|message)\b",
     ),
     _p(
@@ -88,9 +88,23 @@ _PATTERNS: tuple[_Pattern, ...] = (
         3,
         r"\bdo not (tell|inform|mention|reveal|alert|notify)\b[^.\n]{0,30}\b(the )?(user|analyst|human|operator)\b",
     ),
-    _p("role_hijack", 2, r"\byou are (now|no longer)\b|\bact as (if you are |a |an )?(?!a (member|part))"),
-    _p("role_prefix", 2, r"^\s*(system|assistant|developer)\s*:", ),
-    _p("jailbreak_terms", 2, r"\bjailbreak(ed)?\b|\bDAN mode\b|\bdeveloper mode\b|\bprompt injection payload\b"),
+    _p(
+        "role_hijack",
+        2,
+        r"\byou are (now|no longer)\b|\bact as (if you are |a |an )?(?!a (member|part))",
+    ),
+    _p("role_prefix", 2, r"(?:^|[.!?]\s+)\s*(system|assistant|developer)\s*:"),
+    _p(
+        "disable_safety",
+        2,
+        r"\b(disable|ignore|remove|turn off|bypass)\b[^.\n]{0,20}\b(safety|safeguards?|guardrails?|"
+        r"content filters?|restrictions)\b",
+    ),
+    _p(
+        "jailbreak_terms",
+        2,
+        r"\bjailbreak(ed)?\b|\bDAN mode\b|\bdeveloper mode\b|\bprompt injection payload\b",
+    ),
     _p(
         "tool_or_url_directive",
         2,

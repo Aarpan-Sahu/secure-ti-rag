@@ -35,7 +35,11 @@ def _load(name: str) -> Any:
 
 
 class MockFeeds:
-    def __init__(self, misp_key: str = "mock-misp-key", opencti_token: str = "mock-opencti-token") -> None:
+    def __init__(
+        self,
+        misp_key: str = "mock-misp-key",
+        opencti_token: str = "mock-opencti-token",  # noqa: S107  # nosec B107 - fixture server only
+    ) -> None:
         self.misp_key = misp_key
         self.opencti_token = opencti_token
         self._misp = _load("misp_restsearch.json")["response"]
@@ -43,7 +47,9 @@ class MockFeeds:
         self.requests: list[tuple[str, str]] = []  # (path, auth) - lets tests assert on calls
 
     # --- MISP ------------------------------------------------------------------------------
-    def misp_search(self, headers: httpx.Headers, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    def misp_search(
+        self, headers: httpx.Headers, body: dict[str, Any]
+    ) -> tuple[int, dict[str, Any]]:
         if headers.get("Authorization") != self.misp_key:
             return 403, {"name": "Authentication failed"}
         since = int(body.get("timestamp", 0))
@@ -58,7 +64,9 @@ class MockFeeds:
         return 200, {"response": events[(page - 1) * limit : page * limit]}
 
     # --- OpenCTI ---------------------------------------------------------------------------
-    def opencti_graphql(self, headers: httpx.Headers, body: dict[str, Any]) -> tuple[int, dict[str, Any]]:
+    def opencti_graphql(
+        self, headers: httpx.Headers, body: dict[str, Any]
+    ) -> tuple[int, dict[str, Any]]:
         if headers.get("Authorization") != f"Bearer {self.opencti_token}":
             return 401, {"errors": [{"message": "You must be logged in"}]}
         match = _ROOT_RE.search(str(body.get("query", "")))

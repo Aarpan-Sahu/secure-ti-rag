@@ -89,7 +89,9 @@ def process_document(
         report.documents_skipped += 1
         return
 
-    vectors = _embed_in_batches(embeddings, [c.page_content for c in kept], settings.embed_batch_size)
+    vectors = _embed_in_batches(
+        embeddings, [c.page_content for c in kept], settings.embed_batch_size
+    )
     store.upsert_document(doc.doc_id, kept, vectors)
     report.documents_indexed += 1
     report.chunks_indexed += len(kept)
@@ -108,7 +110,9 @@ def ingest_connector(
     started = datetime.now(UTC)
 
     lookback = started - timedelta(
-        days=settings.misp_lookback_days if connector.name == "misp" else settings.opencti_lookback_days
+        days=settings.misp_lookback_days
+        if connector.name == "misp"
+        else settings.opencti_lookback_days
     )
     previous = None if full else store.get_state(state_key)
     if getattr(connector, "full_history", False):

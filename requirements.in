@@ -1,0 +1,16 @@
+# Direct runtime dependencies (see pyproject.toml). The lock file is generated with:
+#   pip-compile --generate-hashes --strip-extras -o requirements.txt requirements.in
+fastapi
+uvicorn[standard]
+httpx
+pydantic
+pydantic-settings
+langchain-core
+langchain-text-splitters
+langchain-aws
+langchain-anthropic
+psycopg[binary,pool]
+pgvector
+numpy
+PyJWT[crypto]
+prometheus-client

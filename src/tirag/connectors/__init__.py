@@ -29,7 +29,9 @@ def build_connectors(settings: Settings, sources: list[str]) -> list[Any]:
             )
         elif source == "opencti":
             if not (settings.opencti_url and settings.opencti_token):
-                raise ConnectorError("OpenCTI is not configured (TIRAG_OPENCTI_URL / TIRAG_OPENCTI_TOKEN)")
+                raise ConnectorError(
+                    "OpenCTI is not configured (TIRAG_OPENCTI_URL / TIRAG_OPENCTI_TOKEN)"
+                )
             connectors.append(
                 OpenCTIConnector(
                     settings.opencti_url,

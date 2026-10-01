@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import math
 from collections import Counter
+from itertools import pairwise
 
 from langchain_core.embeddings import Embeddings
 
@@ -41,7 +42,7 @@ class HashEmbeddings(Embeddings):
             if len(padded) > 4:
                 for i in range(len(padded) - 2):
                     feats[f"c:{padded[i : i + 3]}"] += 0.25
-        for left, right in zip(tokens, tokens[1:], strict=False):
+        for left, right in pairwise(tokens):
             feats[f"b:{left}_{right}"] += 0.5
         return feats
 

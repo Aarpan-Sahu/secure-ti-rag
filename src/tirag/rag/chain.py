@@ -123,7 +123,12 @@ class RAGService:
             raise GuardrailViolation(check.reason or "rejected", check.flags)
         try:
             result: RAGResult = self._chain.invoke(
-                {"question": check.query, "clearance": clearance, "k": k, "flags": list(check.flags)}
+                {
+                    "question": check.query,
+                    "clearance": clearance,
+                    "k": k,
+                    "flags": list(check.flags),
+                }
             )
         except GuardrailViolation:
             raise
@@ -224,8 +229,10 @@ class RAGService:
     def _citation(self, n: int, doc: Document) -> Citation:
         md = doc.metadata
         body = doc.page_content.split("\n", 1)[-1][:300]
+        title = md.get("title")
         if self.settings.defang_output:
             body = defang_text(body)
+            title = defang_text(title) if title else title
         return Citation(
             n=n,
             chunk_id=md["chunk_id"],
@@ -233,7 +240,7 @@ class RAGService:
             source=md["source"],
             source_id=md["source_id"],
             doc_type=md["doc_type"],
-            title=md.get("title"),
+            title=title,
             url=md.get("url"),
             tlp=md["tlp"],
             score=float(md.get("score", 0.0)),

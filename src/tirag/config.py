@@ -111,7 +111,9 @@ class Settings(BaseSettings):
             if self.store_backend != "pgvector":
                 raise ValueError("TIRAG_STORE_BACKEND must be 'pgvector' in staging/prod")
             if not (self.misp_verify_tls and self.opencti_verify_tls):
-                raise ValueError("TLS verification of feed connectors cannot be disabled in staging/prod")
+                raise ValueError(
+                    "TLS verification of feed connectors cannot be disabled in staging/prod"
+                )
         if self.env == "prod":
             if self.audit_log_queries:
                 raise ValueError("TIRAG_AUDIT_LOG_QUERIES must be false in prod (query privacy)")

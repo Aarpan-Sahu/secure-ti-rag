@@ -17,9 +17,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 from tirag.security.sanitize import escape_for_prompt
 
-NO_EVIDENCE_ANSWER = (
-    "I could not find sufficient evidence in the threat intelligence corpus to answer this question."
-)
+NO_EVIDENCE_ANSWER = "I could not find sufficient evidence in the threat intelligence corpus to answer this question."
 
 SYSTEM_PROMPT = f"""You are a threat-intelligence analyst assistant. You answer questions using ONLY the \
 evidence documents supplied inside <context_documents>.

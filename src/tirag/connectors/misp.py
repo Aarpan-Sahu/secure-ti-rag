@@ -57,7 +57,11 @@ def _ts(value: Any) -> datetime | None:
 
 def _ip_label(value: str) -> str:
     try:
-        return "ipv6" if isinstance(ipaddress.ip_address(value.strip()), ipaddress.IPv6Address) else "ipv4"
+        return (
+            "ipv6"
+            if isinstance(ipaddress.ip_address(value.strip()), ipaddress.IPv6Address)
+            else "ipv4"
+        )
     except ValueError:
         return "ip"
 
@@ -119,7 +123,9 @@ class MispConnector:
     ) -> None:
         self.base_url = validate_base_url(base_url, allow_http)
         self._api_key = api_key
-        self._client = client or httpx.Client(timeout=30.0, verify=verify_tls, follow_redirects=False)
+        self._client = client or httpx.Client(
+            timeout=30.0, verify=verify_tls, follow_redirects=False
+        )
         self._trusted = {o.lower() for o in (trusted_orgs or set())}
         self._page_size = page_size
         self._default_tlp = default_tlp
@@ -180,14 +186,18 @@ class MispConnector:
         labels = [TLP.parse(t) for t in tags if t.lower().startswith("tlp:")]
         return TLP.most_restrictive(labels, self._default_tlp)
 
-    def _event_docs(self, event: dict[str, Any], clusters: dict[str, ThreatDoc]) -> Iterator[ThreatDoc]:
+    def _event_docs(
+        self, event: dict[str, Any], clusters: dict[str, ThreatDoc]
+    ) -> Iterator[ThreatDoc]:
         event_id = str(event.get("uuid") or event.get("id") or "")
         if not event_id:
             return
         org = str((event.get("Orgc") or {}).get("name") or "unknown")
         if self._trusted and org.lower() not in self._trusted:
             self.skipped += 1
-            log.info("skipping MISP event from untrusted org", extra={"event_id": event_id, "org": org})
+            log.info(
+                "skipping MISP event from untrusted org", extra={"event_id": event_id, "org": org}
+            )
             return
 
         tags = [str(t.get("name", "")) for t in event.get("Tag", []) if isinstance(t, dict)]
@@ -225,7 +235,12 @@ class MispConnector:
             if content:
                 lines.append(f"\n## {name}\n{content}")
 
-        common = {"source": self.name, "tlp": tlp, "created": _ts(event.get("publish_timestamp")), "modified": modified}
+        common = {
+            "source": self.name,
+            "tlp": tlp,
+            "created": _ts(event.get("publish_timestamp")),
+            "modified": modified,
+        }
         yield ThreatDoc(
             source_id=event_id,
             doc_type=DocType.EVENT,
@@ -274,11 +289,19 @@ class MispConnector:
         key = str(cluster.get("uuid") or f"{kind.value}-{value.lower()}")
         meta = cluster.get("meta") or {}
         parts = [str(cluster.get("description") or "").strip()]
-        for field_name in ("synonyms", "country", "cfr-suspected-victims", "cfr-target-category", "refs"):
+        for field_name in (
+            "synonyms",
+            "country",
+            "cfr-suspected-victims",
+            "cfr-target-category",
+            "refs",
+        ):
             raw = meta.get(field_name)
             if raw:
                 items = raw if isinstance(raw, list) else [raw]
-                parts.append(f"{field_name.replace('-', ' ').capitalize()}: " + ", ".join(map(str, items)))
+                parts.append(
+                    f"{field_name.replace('-', ' ').capitalize()}: " + ", ".join(map(str, items))
+                )
         text = "\n".join(p for p in parts if p)
         existing = clusters.get(key)
         if existing is not None:

@@ -14,9 +14,68 @@ from tirag.models import IOC, IOCType
 
 # Common file extensions that look like TLDs ("setup.exe", "report.pdf"): never domains.
 _FILE_EXTENSIONS = frozenset(
-    "exe dll sys bat cmd ps1 psm1 vbs vbe js jse jar py pl rb sh zip rar gz tar tgz iso img lnk "
-    "doc docx docm xls xlsx xlsm ppt pptx pdf rtf txt log csv json xml yml yaml html htm php asp "
-    "aspx png jpg jpeg gif svg bmp ico dat bin tmp cfg ini conf md".split()
+    [
+        "exe",
+        "dll",
+        "sys",
+        "bat",
+        "cmd",
+        "ps1",
+        "psm1",
+        "vbs",
+        "vbe",
+        "js",
+        "jse",
+        "jar",
+        "py",
+        "pl",
+        "rb",
+        "sh",
+        "zip",
+        "rar",
+        "gz",
+        "tar",
+        "tgz",
+        "iso",
+        "img",
+        "lnk",
+        "doc",
+        "docx",
+        "docm",
+        "xls",
+        "xlsx",
+        "xlsm",
+        "ppt",
+        "pptx",
+        "pdf",
+        "rtf",
+        "txt",
+        "log",
+        "csv",
+        "json",
+        "xml",
+        "yml",
+        "yaml",
+        "html",
+        "htm",
+        "php",
+        "asp",
+        "aspx",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "svg",
+        "bmp",
+        "ico",
+        "dat",
+        "bin",
+        "tmp",
+        "cfg",
+        "ini",
+        "conf",
+        "md",
+    ]
 )
 
 _RE_SHA256 = re.compile(r"(?<![A-Fa-f0-9])[A-Fa-f0-9]{64}(?![A-Fa-f0-9])")
@@ -28,10 +87,10 @@ _RE_IPV4 = re.compile(
     r"(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)"
     r"(?![\d])"
 )
-_RE_IPV6 = re.compile(r"(?<![A-Fa-f0-9:])(?:[A-Fa-f0-9]{0,4}:){2,7}[A-Fa-f0-9]{0,4}(?![A-Fa-f0-9:])")
-_RE_DOMAIN = re.compile(
-    r"\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24}\b"
+_RE_IPV6 = re.compile(
+    r"(?<![A-Fa-f0-9:])(?:[A-Fa-f0-9]{0,4}:){2,7}[A-Fa-f0-9]{0,4}(?![A-Fa-f0-9:])"
 )
+_RE_DOMAIN = re.compile(r"\b(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24}\b")
 _RE_CVE = re.compile(r"\bCVE-\d{4}-\d{4,7}\b", re.IGNORECASE)
 
 _REFANG_RULES: tuple[tuple[re.Pattern[str], str], ...] = (
@@ -158,7 +217,9 @@ def defang_text(text: str) -> str:
     return "".join(out)
 
 
-def redact_unsupported_iocs(text: str, allowed: set[str], placeholder: str) -> tuple[str, list[str]]:
+def redact_unsupported_iocs(
+    text: str, allowed: set[str], placeholder: str
+) -> tuple[str, list[str]]:
     """Replace any IOC in ``text`` whose normalised value is not in ``allowed``.
 
     Used on LLM output: an indicator that is not present in the retrieved evidence (or in the

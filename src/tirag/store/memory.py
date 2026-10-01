@@ -90,7 +90,10 @@ class MemoryStore(ChunkStore):
     def _entries(self, flt: SearchFilter) -> list[_Entry]:
         with self._lock:
             return [
-                e for entries in self._by_doc.values() for e in entries if flt.allows(e.doc.metadata)
+                e
+                for entries in self._by_doc.values()
+                for e in entries
+                if flt.allows(e.doc.metadata)
             ]
 
     def search_vector(self, embedding: list[float], k: int, flt: SearchFilter) -> list[ScoredChunk]:
@@ -189,7 +192,8 @@ class MemoryStore(ChunkStore):
                 os.unlink(tmp)
 
     def _load(self) -> None:
-        assert self._path is not None
+        if self._path is None:
+            return
         data = json.loads(self._path.read_text(encoding="utf-8"))
         self._state = dict(data.get("state", {}))
         self._quarantine = [QuarantineRecord(**q) for q in data.get("quarantine", [])]
