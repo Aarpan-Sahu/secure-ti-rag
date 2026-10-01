@@ -52,7 +52,7 @@ Find the symptom, check the cause, apply the fix. Log groups: `/tirag-<env>/api`
 
 | Symptom | Fix |
 |---|---|
-| `pip install` refuses (hash mismatch / "requires hashes") | Use the lock files exactly: `pip install --require-hashes -r requirements-dev.txt`, then `pip install --no-deps -e .` |
+| `pip install` refuses (hash mismatch / "requires hashes") | Use the lock files exactly: `pip install --require-hashes -r requirements.txt -r requirements-dev.txt`, then `pip install --no-deps -e .` |
 | `ValueError: TIRAG_API_KEYS_JSON is not valid JSON` | Quote the JSON in the shell with single quotes |
 | 401 locally | Dev default is `TIRAG_AUTH_MODE=apikey`; set `disabled` for a throwaway local run or mint a key |
 | Integration tests fail to start PostgreSQL | They use the `pgserver` wheel (embedded PostgreSQL); run on a non-root user or check disk space/permissions of the temp dir; run unit tests only with `pytest -m "not integration"` |

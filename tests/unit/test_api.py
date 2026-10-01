@@ -228,6 +228,7 @@ def test_prompt_injection_query_gets_generic_400(api) -> None:
     )
     assert resp.status_code == 400
     assert resp.json()["error"]["message"] == "request rejected by input policy"
+    assert resp.json()["error"]["code"] == "input_rejected"
     assert "ignore_instructions" not in resp.text  # do not teach the attacker which rule fired
 
 

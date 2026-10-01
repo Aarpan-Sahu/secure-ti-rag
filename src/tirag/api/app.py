@@ -45,6 +45,16 @@ from tirag.store import build_store
 audit_log = logging.getLogger("tirag.audit")
 log = logging.getLogger(__name__)
 
+
+class InputRejected(HTTPException):
+    """400 raised when the input guard blocks a request; carries a stable machine-readable code."""
+
+    code = "input_rejected"
+
+    def __init__(self) -> None:
+        super().__init__(400, "request rejected by input policy")
+
+
 _bearer_scheme = HTTPBearer(auto_error=False, description="API key or OIDC access token")
 
 
@@ -133,7 +143,11 @@ def create_app(
     @app.exception_handler(StarletteHTTPException)
     async def _http_error(request: Request, exc: StarletteHTTPException):
         return _error(
-            exc.status_code, "http_error", str(exc.detail), request, getattr(exc, "headers", None)
+            exc.status_code,
+            getattr(exc, "code", "http_error"),
+            str(exc.detail),
+            request,
+            getattr(exc, "headers", None),
         )
 
     @app.exception_handler(Exception)
@@ -243,7 +257,7 @@ def create_app(
             for flag in exc.flags:
                 metrics.GUARDRAIL_FLAGS.labels(flag).inc()
             _audit(principal, request, body.question, "query_blocked", flags=exc.flags)
-            raise HTTPException(400, "request rejected by input policy") from exc
+            raise InputRejected() from exc
         except UpstreamError as exc:
             metrics.UPSTREAM_ERRORS.inc()
             metrics.QUERIES.labels("error").inc()
@@ -292,7 +306,7 @@ def create_app(
             docs = service.search(body.question, _clearance(principal, body), body.top_k)
         except GuardrailViolation as exc:
             _audit(principal, request, body.question, "search_blocked", flags=exc.flags)
-            raise HTTPException(400, "request rejected by input policy") from exc
+            raise InputRejected() from exc
         except UpstreamError as exc:
             metrics.UPSTREAM_ERRORS.inc()
             raise HTTPException(502, "upstream service unavailable") from exc

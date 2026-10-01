@@ -104,7 +104,7 @@ Key design decisions (full rationale in `docs/architecture.md`):
 
 ```bash
 python3.11 -m venv .venv && . .venv/bin/activate
-pip install --require-hashes -r requirements-dev.txt && pip install --no-deps -e .
+pip install --require-hashes -r requirements.txt -r requirements-dev.txt && pip install --no-deps -e .
 
 export TIRAG_MEMORY_INDEX_PATH=.data/index.json      # in-memory store persisted to a JSON file
 tirag ingest --source fixtures                       # loads the synthetic, fictional demo data
