@@ -1,0 +1,12 @@
+variable "name" { type = string }
+variable "region" { type = string }
+variable "alarm_topic_arn" { type = string }
+variable "cluster_name" { type = string }
+variable "service_name" { type = string }
+variable "alb_arn_suffix" { type = string }
+variable "target_group_arn_suffix" { type = string }
+variable "db_instance_id" { type = string }
+variable "api_log_group" { type = string }
+variable "ingest_log_group" { type = string }
+variable "ingest_enabled" { type = bool }
+variable "web_acl_name" { type = string }

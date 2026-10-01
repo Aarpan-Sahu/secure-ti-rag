@@ -1,0 +1,16 @@
+output "cluster_name" { value = aws_ecs_cluster.this.name }
+output "service_name" { value = aws_ecs_service.api.name }
+output "alb_dns_name" { value = aws_lb.this.dns_name }
+output "alb_arn_suffix" { value = aws_lb.this.arn_suffix }
+output "target_group_arn_suffix" { value = aws_lb_target_group.api.arn_suffix }
+output "web_acl_arn" { value = aws_wafv2_web_acl.this.arn }
+output "api_log_group" { value = aws_cloudwatch_log_group.api.name }
+output "ingest_log_group" { value = aws_cloudwatch_log_group.ingest.name }
+output "api_security_group_id" { value = aws_security_group.api.id }
+output "ingest_security_group_id" { value = aws_security_group.ingest.id }
+output "db_init_task_definition" { value = aws_ecs_task_definition.db_init.arn }
+output "api_keys_secret_arn" { value = aws_secretsmanager_secret.api_keys.arn }
+output "misp_secret_arn" { value = one(aws_secretsmanager_secret.misp[*].arn) }
+output "opencti_secret_arn" { value = one(aws_secretsmanager_secret.opencti[*].arn) }
+output "ingest_enabled" { value = local.schedule_enabled }
+output "web_acl_name" { value = aws_wafv2_web_acl.this.name }
