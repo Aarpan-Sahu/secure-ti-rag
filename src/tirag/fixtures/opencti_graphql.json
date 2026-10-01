@@ -1,0 +1,570 @@
+{
+  "threatActorsGroup": [
+    {
+      "id": "a02ebfab-b5ca-5427-a313-b8789103213e",
+      "standard_id": "threat-actor--76a36124-6355-5d14-a5d4-9797d5123ad6",
+      "name": "STORMVEIL",
+      "created": "2026-09-10T09:00:00.000Z",
+      "modified": "2026-09-10T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "ransomware"
+        },
+        {
+          "value": "healthcare"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "STORMVEIL (aliases VeilCrew, TA-STORM) is a financially motivated ransomware affiliate group that primarily targets regional hospitals and healthcare providers in North America and Europe. Intrusions begin with phishing e-mails carrying ISO or LNK attachments that deploy the GLASSLOADER loader, followed by hands-on-keyboard activity and deployment of EMBERDROP ransomware roughly five days after initial access.",
+      "aliases": [
+        "VeilCrew",
+        "TA-STORM"
+      ],
+      "first_seen": "2025-11-01T00:00:00.000Z",
+      "last_seen": "2026-09-08T00:00:00.000Z",
+      "threat_actor_types": [
+        "crime-syndicate"
+      ],
+      "goals": [
+        "Extortion of healthcare providers"
+      ],
+      "sophistication": "advanced",
+      "resource_level": "organization",
+      "primary_motivation": "personal-gain",
+      "secondary_motivations": [],
+      "roles": [
+        "malware-author"
+      ]
+    },
+    {
+      "id": "9c755ea8-9176-56c2-b7a2-9185b04435f5",
+      "standard_id": "threat-actor--626cc6c0-49e6-5b99-9d2a-822ce56f7dea",
+      "name": "COPPER HERON",
+      "created": "2026-09-16T09:00:00.000Z",
+      "modified": "2026-09-16T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "espionage"
+        },
+        {
+          "value": "telecommunications"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:GREEN",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "COPPER HERON (alias Heron Group) is a state-aligned espionage actor that targets telecommunications providers and network-equipment vendors. The group exploits internet-facing VPN gateways (notably NetGate X, CVE-2099-12345), installs the HERONSHELL web shell and the LANTERNBOOT backdoor, and relies on living-off-the-land tooling to remain undetected.",
+      "aliases": [
+        "Heron Group"
+      ],
+      "first_seen": "2024-06-01T00:00:00.000Z",
+      "last_seen": "2026-09-14T00:00:00.000Z",
+      "threat_actor_types": [
+        "nation-state"
+      ],
+      "goals": [
+        "Collection of telecommunications metadata"
+      ],
+      "sophistication": "expert",
+      "resource_level": "government",
+      "primary_motivation": "organizational-gain",
+      "secondary_motivations": [],
+      "roles": [
+        "agent"
+      ]
+    },
+    {
+      "id": "a3d2cfb4-cce4-506d-a8e4-682b4c8369c0",
+      "standard_id": "threat-actor--f00eaa3b-ea7f-5602-876b-16d046397f93",
+      "name": "NIGHT KESTREL",
+      "created": "2026-09-21T09:00:00.000Z",
+      "modified": "2026-09-21T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "cloud"
+        },
+        {
+          "value": "cryptomining"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:CLEAR",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "NIGHT KESTREL is a cloud-focused intrusion actor that abuses leaked or over-privileged cloud access keys to enumerate accounts, exfiltrate object-storage data and run cryptocurrency miners on compute instances across AWS, Azure and GCP.",
+      "aliases": [
+        "KestrelOps"
+      ],
+      "first_seen": "2026-03-01T00:00:00.000Z",
+      "last_seen": "2026-09-19T00:00:00.000Z",
+      "threat_actor_types": [
+        "criminal"
+      ],
+      "goals": [
+        "Resource hijacking and data theft in cloud accounts"
+      ],
+      "sophistication": "intermediate",
+      "resource_level": "team",
+      "primary_motivation": "personal-gain",
+      "secondary_motivations": [],
+      "roles": []
+    }
+  ],
+  "intrusionSets": [
+    {
+      "id": "54166f8e-72cc-5f15-857c-80b4bba0fc9c",
+      "standard_id": "intrusion-set--b095f82d-3fcf-5405-9ccd-7f7593f57e34",
+      "name": "LANTERN-OPS",
+      "created": "2026-09-17T09:00:00.000Z",
+      "modified": "2026-09-17T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "espionage"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:GREEN",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "LANTERN-OPS is the intrusion set OpenCTI associates with COPPER HERON's campaigns against telecommunications operators, characterised by edge-device exploitation followed by LANTERNBOOT deployment.",
+      "aliases": [
+        "LanternOps"
+      ],
+      "first_seen": "2024-06-01T00:00:00.000Z",
+      "last_seen": "2026-09-14T00:00:00.000Z",
+      "goals": [
+        "Persistent access to carrier networks"
+      ],
+      "resource_level": "government",
+      "primary_motivation": "organizational-gain",
+      "secondary_motivations": []
+    }
+  ],
+  "malwares": [
+    {
+      "id": "c2dcb76f-b18e-5054-ad33-b187868e66e0",
+      "standard_id": "malware--2b70411e-6e9f-502b-a20e-f6358f9a6476",
+      "name": "GLASSLOADER",
+      "created": "2026-09-10T09:00:00.000Z",
+      "modified": "2026-09-10T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "loader"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "GLASSLOADER is a DLL-sideloading loader delivered in ISO files. It contacts its C2 over HTTPS, downloads second-stage payloads and has been used by STORMVEIL to stage EMBERDROP ransomware.",
+      "aliases": [
+        "GlassDrop"
+      ],
+      "malware_types": [
+        "loader"
+      ],
+      "is_family": true,
+      "first_seen": "2025-11-01T00:00:00.000Z",
+      "last_seen": "2026-09-08T00:00:00.000Z",
+      "architecture_execution_envs": [
+        "x86-64"
+      ],
+      "implementation_languages": [
+        "c++"
+      ],
+      "capabilities": [
+        "downloads-other-malware",
+        "persists-after-system-reboot"
+      ]
+    },
+    {
+      "id": "6773dec8-43ec-5aef-98cf-c86508612f88",
+      "standard_id": "malware--a5c04de0-106d-5c28-aa26-a6421816d199",
+      "name": "EMBERDROP",
+      "created": "2026-09-11T09:00:00.000Z",
+      "modified": "2026-09-11T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "ransomware"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "EMBERDROP is the ransomware family deployed by STORMVEIL. It terminates backup and database services, deletes volume shadow copies and encrypts files with an .ember extension.",
+      "aliases": [],
+      "malware_types": [
+        "ransomware"
+      ],
+      "is_family": true,
+      "first_seen": "2025-12-01T00:00:00.000Z",
+      "last_seen": "2026-09-08T00:00:00.000Z",
+      "architecture_execution_envs": [
+        "x86-64"
+      ],
+      "implementation_languages": [
+        "rust"
+      ],
+      "capabilities": [
+        "encrypts-files",
+        "deletes-volume-shadow-copies"
+      ]
+    },
+    {
+      "id": "b5e1b122-6e94-57f6-ac71-9ee06581635b",
+      "standard_id": "malware--3267f143-f9c0-5eb6-9106-74750fcf60a4",
+      "name": "HERONSHELL",
+      "created": "2026-09-16T09:00:00.000Z",
+      "modified": "2026-09-16T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "webshell"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:GREEN",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "HERONSHELL is a JSP web shell (commonly named healthcheck.jsp) used by COPPER HERON on compromised NetGate X VPN gateways.",
+      "aliases": [],
+      "malware_types": [
+        "backdoor"
+      ],
+      "is_family": false,
+      "first_seen": "2026-08-01T00:00:00.000Z",
+      "last_seen": "2026-09-14T00:00:00.000Z",
+      "architecture_execution_envs": [],
+      "implementation_languages": [
+        "java"
+      ],
+      "capabilities": [
+        "executes-commands",
+        "exfiltrates-data"
+      ]
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "018103a1-1345-598a-929f-6f0a808b17df",
+      "standard_id": "campaign--6107495f-868c-5bde-aeb2-7e9bc6e491f7",
+      "name": "Operation HOSPITAL-SWEEP",
+      "created": "2026-09-10T09:00:00.000Z",
+      "modified": "2026-09-10T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "healthcare"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Campaign name used for the September 2026 STORMVEIL wave of ISO-lure phishing against regional hospitals, ending in EMBERDROP deployments.",
+      "aliases": [],
+      "first_seen": "2026-09-02T00:00:00.000Z",
+      "last_seen": "2026-09-08T00:00:00.000Z",
+      "objective": "Ransomware extortion of healthcare providers"
+    }
+  ],
+  "reports": [
+    {
+      "id": "b043149f-9986-5a0c-8569-bf5837e78647",
+      "standard_id": "report--bd67a93a-e479-5206-944f-9e8686394ed6",
+      "name": "STORMVEIL Q3 2026 activity assessment",
+      "created": "2026-09-24T09:00:00.000Z",
+      "modified": "2026-09-24T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "ransomware"
+        },
+        {
+          "value": "healthcare"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Assessment of STORMVEIL operations during Q3 2026.",
+      "published": "2026-09-24T00:00:00.000Z",
+      "report_types": [
+        "threat-report"
+      ],
+      "content": "Key judgements. STORMVEIL remains the most active ransomware affiliate targeting healthcare in our visibility. Median dwell time between initial access and EMBERDROP deployment was five days. Typical ransom demands ranged between 0.5 and 2 percent of annual revenue.\n\nInitial access. ISO and LNK attachments in invoice-themed phishing deliver GLASSLOADER. The loader beacons to update-check.example.net (198.51.100.23).\n\nRecommendations. Block ISO attachments at the e-mail gateway; disable automatic ISO mounting via Group Policy; monitor rundll32 execution from user-writable directories; keep offline, immutable backups and test restoration of hypervisor and database tiers."
+    },
+    {
+      "id": "1b2bd52b-0097-5aab-b331-39d6a71e7581",
+      "standard_id": "report--dd67f394-4808-56d7-9c5f-a848e032583d",
+      "name": "Detecting cloud credential abuse by NIGHT KESTREL",
+      "created": "2026-09-27T09:00:00.000Z",
+      "modified": "2026-09-27T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "cloud"
+        },
+        {
+          "value": "detection"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:CLEAR",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Detection guidance for leaked-key abuse in AWS, Azure and GCP.",
+      "published": "2026-09-27T00:00:00.000Z",
+      "report_types": [
+        "threat-report"
+      ],
+      "content": "NIGHT KESTREL operators validate stolen keys within minutes using identity discovery calls (for example sts GetCallerIdentity) from 203.0.113.9. Detection ideas: (1) alert when a long-lived access key is used from an ASN never seen for that principal; (2) alert on bulk ListBuckets/GetObject followed by instance launches in unused regions; (3) enforce short-lived credentials via workload identity federation; (4) enable secret scanning and push protection on all repositories; (5) apply service control policies that deny instance families used for mining in non-approved regions."
+    },
+    {
+      "id": "fd5b70b0-5ae6-53d8-bffa-3b3eb5972e37",
+      "standard_id": "report--2a8412ac-ec19-5383-bde3-00c8cc7997dc",
+      "name": "COPPER HERON telecom signalling targeting (restricted)",
+      "created": "2026-09-28T09:00:00.000Z",
+      "modified": "2026-09-28T12:00:00.000Z",
+      "objectLabel": [
+        {
+          "value": "espionage"
+        },
+        {
+          "value": "telecommunications"
+        }
+      ],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER+STRICT",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Restricted assessment of COPPER HERON interest in signalling infrastructure.",
+      "published": "2026-09-28T00:00:00.000Z",
+      "report_types": [
+        "threat-report"
+      ],
+      "content": "COPPER HERON is assessed with moderate confidence to be collecting subscriber metadata from signalling gateways in addition to VPN gateway compromises. Distribution is limited to the named organisation; do not forward."
+    }
+  ],
+  "indicators": [
+    {
+      "id": "3a43544b-f553-59d4-a176-dbda787c4de5",
+      "standard_id": "indicator--5ebc8157-aec1-574b-977d-12ac9a1b257b",
+      "name": "STORMVEIL C2 198.51.100.23",
+      "created": "2026-09-10T09:00:00.000Z",
+      "modified": "2026-09-10T12:00:00.000Z",
+      "objectLabel": [],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Command-and-control server used by GLASSLOADER (STORMVEIL).",
+      "pattern": "[ipv4-addr:value = '198.51.100.23']",
+      "pattern_type": "stix",
+      "valid_from": "2026-09-10T09:00:00.000Z",
+      "valid_until": null,
+      "x_opencti_score": 90,
+      "revoked": false,
+      "indicator_types": [
+        "malicious-activity"
+      ]
+    },
+    {
+      "id": "e78291e0-c283-576a-bc17-20572050aac7",
+      "standard_id": "indicator--69fa3b2f-7bdf-5933-8146-b4e4e8fe03cf",
+      "name": "GLASSLOADER staging domain",
+      "created": "2026-09-10T09:00:00.000Z",
+      "modified": "2026-09-10T12:00:00.000Z",
+      "objectLabel": [],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Staging domain serving GLASSLOADER second-stage payloads.",
+      "pattern": "[domain-name:value = 'update-check.example.net']",
+      "pattern_type": "stix",
+      "valid_from": "2026-09-10T09:00:00.000Z",
+      "valid_until": null,
+      "x_opencti_score": 85,
+      "revoked": false,
+      "indicator_types": [
+        "malicious-activity"
+      ]
+    },
+    {
+      "id": "da6807d3-2bae-5681-93f1-463e090b5824",
+      "standard_id": "indicator--ba70c272-d7b3-5bfa-9f87-d8b054dbbb42",
+      "name": "GLASSLOADER DLL hash",
+      "created": "2026-09-10T09:00:00.000Z",
+      "modified": "2026-09-10T12:00:00.000Z",
+      "objectLabel": [],
+      "objectMarking": [
+        {
+          "definition": "TLP:AMBER",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "SHA-256 of the GLASSLOADER sideloaded DLL.",
+      "pattern": "[file:hashes.'SHA-256' = '1182a16c9cd699281acc5b5b0449bfb1d1c11f02a31fb138ecde228619f81667']",
+      "pattern_type": "stix",
+      "valid_from": "2026-09-10T09:00:00.000Z",
+      "valid_until": null,
+      "x_opencti_score": 80,
+      "revoked": false,
+      "indicator_types": [
+        "malicious-activity"
+      ]
+    },
+    {
+      "id": "2e5c9d1e-0985-5fc4-a7a9-56a5fe92ee79",
+      "standard_id": "indicator--4e936c5b-5a8b-5d1d-ab63-88d97aac9b55",
+      "name": "HERONSHELL hash",
+      "created": "2026-09-16T09:00:00.000Z",
+      "modified": "2026-09-16T12:00:00.000Z",
+      "objectLabel": [],
+      "objectMarking": [
+        {
+          "definition": "TLP:GREEN",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "SHA-256 of the HERONSHELL JSP web shell.",
+      "pattern": "[file:hashes.'SHA-256' = '7ccee55ac0d2d09952d8cb454632b214eade91f97ea20a0e284bee68c76b83d7']",
+      "pattern_type": "stix",
+      "valid_from": "2026-09-16T09:00:00.000Z",
+      "valid_until": null,
+      "x_opencti_score": 85,
+      "revoked": false,
+      "indicator_types": [
+        "malicious-activity"
+      ]
+    },
+    {
+      "id": "d26397b5-2af4-53f5-a732-04fa4ab76dea",
+      "standard_id": "indicator--9448f31d-8f63-5ab9-8835-ca84a8c7120b",
+      "name": "LANTERNBOOT C2 domain",
+      "created": "2026-09-16T09:00:00.000Z",
+      "modified": "2026-09-16T12:00:00.000Z",
+      "objectLabel": [],
+      "objectMarking": [
+        {
+          "definition": "TLP:GREEN",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "C2 domain of the LANTERNBOOT backdoor (COPPER HERON).",
+      "pattern": "[domain-name:value = 'cdn-metrics.example.com']",
+      "pattern_type": "stix",
+      "valid_from": "2026-09-16T09:00:00.000Z",
+      "valid_until": null,
+      "x_opencti_score": 75,
+      "revoked": false,
+      "indicator_types": [
+        "malicious-activity"
+      ]
+    },
+    {
+      "id": "c3b31496-91a7-503d-9560-5c859cb6f2f7",
+      "standard_id": "indicator--d9a14d2a-4ca1-5607-8e3e-2e3fa1f12746",
+      "name": "Expired scanner IP (revoked)",
+      "created": "2026-09-05T09:00:00.000Z",
+      "modified": "2026-09-05T12:00:00.000Z",
+      "objectLabel": [],
+      "objectMarking": [
+        {
+          "definition": "TLP:CLEAR",
+          "definition_type": "TLP"
+        }
+      ],
+      "createdBy": {
+        "name": "ACME-CTI"
+      },
+      "description": "Revoked: benign internet scanner, false positive.",
+      "pattern": "[ipv4-addr:value = '203.0.113.99']",
+      "pattern_type": "stix",
+      "valid_from": "2026-09-05T09:00:00.000Z",
+      "valid_until": null,
+      "x_opencti_score": 10,
+      "revoked": true,
+      "indicator_types": [
+        "malicious-activity"
+      ]
+    }
+  ]
+}

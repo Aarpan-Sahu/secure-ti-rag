@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+build/
+dist/
+
+# Local data / secrets (never commit)
+.env
+.env.*
+!.env.example
+.data/
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+api_keys.json
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+terraform.tfvars
+*.auto.tfvars
+!environments/*.tfvars
+.terraformrc
+terraform.rc
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
