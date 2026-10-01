@@ -31,7 +31,7 @@ resource "aws_secretsmanager_secret" "misp" {
 resource "aws_secretsmanager_secret_version" "misp" {
   count         = var.misp_url == "" ? 0 : 1
   secret_id     = aws_secretsmanager_secret.misp[0].id
-  secret_string = "SET-ME-OUT-OF-BAND"
+  secret_string = "SET-ME-OUT-OF-BAND" # checkov:skip=CKV_SECRET_6: placeholder text, not a credential
   lifecycle {
     ignore_changes = [secret_string]
   }
@@ -49,7 +49,7 @@ resource "aws_secretsmanager_secret" "opencti" {
 resource "aws_secretsmanager_secret_version" "opencti" {
   count         = var.opencti_url == "" ? 0 : 1
   secret_id     = aws_secretsmanager_secret.opencti[0].id
-  secret_string = "SET-ME-OUT-OF-BAND"
+  secret_string = "SET-ME-OUT-OF-BAND" # checkov:skip=CKV_SECRET_6: placeholder text, not a credential
   lifecycle {
     ignore_changes = [secret_string]
   }

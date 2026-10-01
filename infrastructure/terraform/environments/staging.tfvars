@@ -1,10 +1,14 @@
-# Non-secret staging settings. Account ids, hostnames and CIDRs below are placeholders (RFC 5737 /
-# example.org); replace them with real values in a private tfvars override or CI variables.
+# Non-secret staging settings.
 environment = "staging"
 aws_region  = "us-east-1"
 
-domain_name       = "tirag-staging.example.org"
-alb_ingress_cidrs = ["198.51.100.0/24"] # corporate VPN egress range (placeholder)
+# Deployment-specific values are NOT stored in the repository. They are supplied by the pipeline from
+# the GitHub environment variable TIRAG_TFVARS_JSON (written to ci.auto.tfvars.json), for example:
+#   {"domain_name": "tirag.example.org", "alb_ingress_cidrs": ["198.51.100.0/24"],
+#    "route53_zone_id": "Z...", "misp_url": "https://misp.example.org",
+#    "feed_egress_cidrs": ["203.0.113.10/32"], "alarm_email": "secops@example.org"}
+# (domain_name and alb_ingress_cidrs are required; see variables.tf for the rest.)
+
 
 desired_count     = 1
 min_count         = 1

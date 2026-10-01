@@ -1,0 +1,85 @@
+name: Deploy
+
+# Runs only after CI succeeded on main. Build once, scan, then promote the SAME image through
+# staging -> prod. Prod waits for a manual approval (GitHub environment "prod" with required reviewers).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false # never interrupt a deployment half-way
+
+jobs:
+  build:
+    name: Build and scan image
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+    steps:
+      - id: meta
+        run: |
+          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.meta.outputs.sha }}
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/Dockerfile
+          load: true
+          push: false
+          tags: tirag:${{ steps.meta.outputs.sha }}
+          build-args: VERSION=${{ steps.meta.outputs.sha }}
+          provenance: false
+      - name: Trivy gate
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: tirag:${{ steps.meta.outputs.sha }}
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Save image
+        run: docker save "tirag:${{ steps.meta.outputs.sha }}" | gzip -1 > image.tar.gz
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: image
+          path: image.tar.gz
+          retention-days: 3
+          compression-level: 0
+
+  staging:
+    name: Deploy to staging
+    needs: build
+    uses: ./.github/workflows/_deploy-env.yml
+    with:
+      environment: staging
+      sha: ${{ needs.build.outputs.sha }}
+    permissions:
+      contents: read
+      id-token: write
+
+  prod:
+    name: Deploy to production
+    needs: [build, staging]
+    uses: ./.github/workflows/_deploy-env.yml
+    with:
+      environment: prod
+      sha: ${{ needs.build.outputs.sha }}
+    permissions:
+      contents: read
+      id-token: write

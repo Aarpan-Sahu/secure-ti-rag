@@ -9,24 +9,24 @@ resource "aws_ecs_cluster" "this" {
 
 locals {
   base_env = {
-    TIRAG_ENV                   = var.environment
-    TIRAG_LOG_LEVEL             = "INFO"
-    TIRAG_STORE_BACKEND         = "pgvector"
-    TIRAG_DB_HOST               = var.db_host
-    TIRAG_DB_PORT               = tostring(var.db_port)
-    TIRAG_DB_NAME               = var.db_name
-    TIRAG_DB_SSLMODE            = "verify-full"
-    TIRAG_DB_SSLROOTCERT        = "/etc/ssl/rds/global-bundle.pem"
-    TIRAG_AUTO_MIGRATE          = "false"
-    TIRAG_AUTH_MODE             = "apikey"
-    TIRAG_ENABLE_DOCS           = "false"
-    TIRAG_EMBEDDING_PROVIDER    = "bedrock"
-    TIRAG_EMBEDDING_DIM         = "1024"
-    TIRAG_EMBEDDING_MODEL_ID    = var.embedding_model_id
-    TIRAG_LLM_PROVIDER          = "bedrock"
-    TIRAG_LLM_MODEL_ID          = var.llm_model_id
-    TIRAG_AWS_REGION            = var.region
-    TIRAG_BEDROCK_GUARDRAIL_ID  = var.guardrail_id
+    TIRAG_ENV                       = var.environment
+    TIRAG_LOG_LEVEL                 = "INFO"
+    TIRAG_STORE_BACKEND             = "pgvector"
+    TIRAG_DB_HOST                   = var.db_host
+    TIRAG_DB_PORT                   = tostring(var.db_port)
+    TIRAG_DB_NAME                   = var.db_name
+    TIRAG_DB_SSLMODE                = "verify-full"
+    TIRAG_DB_SSLROOTCERT            = "/etc/ssl/rds/global-bundle.pem"
+    TIRAG_AUTO_MIGRATE              = "false"
+    TIRAG_AUTH_MODE                 = "apikey"
+    TIRAG_ENABLE_DOCS               = "false"
+    TIRAG_EMBEDDING_PROVIDER        = "bedrock"
+    TIRAG_EMBEDDING_DIM             = "1024"
+    TIRAG_EMBEDDING_MODEL_ID        = var.embedding_model_id
+    TIRAG_LLM_PROVIDER              = "bedrock"
+    TIRAG_LLM_MODEL_ID              = var.llm_model_id
+    TIRAG_AWS_REGION                = var.region
+    TIRAG_BEDROCK_GUARDRAIL_ID      = var.guardrail_id
     TIRAG_BEDROCK_GUARDRAIL_VERSION = var.guardrail_version
   }
 

@@ -1,0 +1,205 @@
+name: Deploy environment (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub environment and tirag environment name (staging | prod)
+        type: string
+        required: true
+      sha:
+        description: Immutable image tag to run (the git SHA that was built)
+        type: string
+        required: true
+      code_ref:
+        description: Git ref of the Terraform code to apply (defaults to the image SHA)
+        type: string
+        required: false
+        default: ""
+      push_image:
+        description: Push the image artifact from this run to the environment registry first
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: ${{ inputs.environment }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # Required reviewers / wait timers / branch rules are configured on this GitHub environment.
+    # The environment name is also what AWS IAM trusts (sub = repo:OWNER/REPO:environment:<name>).
+    environment:
+      name: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TIRAG_ENV: ${{ inputs.environment }}
+      IMAGE_TAG: ${{ inputs.sha }}
+      AWS_REGION_NAME: ${{ vars.AWS_REGION || 'us-east-1' }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+    steps:
+      - name: Check required configuration
+        run: |
+          missing=0
+          for v in AWS_DEPLOY_ROLE_ARN TF_STATE_BUCKET; do
+            case "$v" in
+              AWS_DEPLOY_ROLE_ARN) val='${{ vars.AWS_DEPLOY_ROLE_ARN }}' ;;
+              TF_STATE_BUCKET) val='${{ vars.TF_STATE_BUCKET }}' ;;
+            esac
+            if [ -z "$val" ]; then echo "::error::GitHub environment variable $v is not set for '${TIRAG_ENV}' (see docs/deployment.md)"; missing=1; fi
+          done
+          if [ -z '${{ vars.TIRAG_TFVARS_JSON }}' ]; then echo "::error::GitHub environment variable TIRAG_TFVARS_JSON is not set (domain_name and alb_ingress_cidrs are required)"; missing=1; fi
+          exit $missing
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.code_ref || inputs.sha }}
+          persist-credentials: false
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION_NAME }}
+          role-session-name: gha-deploy-${{ inputs.environment }}-${{ github.run_id }}
+          role-duration-seconds: 3600
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      # ---- image promotion ----------------------------------------------------------------------------
+      - name: Download the image built and scanned earlier in this run
+        if: inputs.push_image
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: image
+
+      - name: Push image to the environment registry (tags are immutable)
+        if: inputs.push_image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          repo="tirag-${TIRAG_ENV}"
+          if aws ecr describe-images --repository-name "$repo" --image-ids imageTag="${IMAGE_TAG}" >/dev/null 2>&1; then
+            echo "Image ${repo}:${IMAGE_TAG} already exists (immutable) - not pushing again."
+          else
+            gunzip -c image.tar.gz | docker load
+            docker tag "tirag:${IMAGE_TAG}" "${REGISTRY}/${repo}:${IMAGE_TAG}"
+            docker push "${REGISTRY}/${repo}:${IMAGE_TAG}"
+          fi
+      - name: Verify the image exists in the registry
+        run: |
+          aws ecr describe-images --repository-name "tirag-${TIRAG_ENV}" \
+            --image-ids imageTag="${IMAGE_TAG}" --query 'imageDetails[0].imageDigest' --output text
+
+      # ---- infrastructure + service rollout -----------------------------------------------------------
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.10.5"
+          terraform_wrapper: false
+
+      - name: Record the currently running task definition (rollback target)
+        id: prev
+        run: |
+          td=$(aws ecs describe-services --cluster "tirag-${TIRAG_ENV}" --services api \
+                 --query 'services[?status==`ACTIVE`].taskDefinition | [0]' --output text 2>/dev/null || true)
+          if [ "$td" = "None" ] || [ "$td" = "null" ]; then td=""; fi
+          echo "taskdef=${td}" >> "$GITHUB_OUTPUT"
+          echo "Previous task definition: ${td:-<none: first deployment>}"
+
+      - name: Terraform init, plan
+        working-directory: infrastructure/terraform
+        env:
+          TFVARS_JSON: ${{ vars.TIRAG_TFVARS_JSON }}
+        run: |
+          printf '%s' "${TFVARS_JSON}" | jq -e . > ci.auto.tfvars.json
+          terraform init -input=false \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="region=${AWS_REGION_NAME}" \
+            -backend-config="key=tirag/${TIRAG_ENV}/terraform.tfstate"
+          terraform plan -input=false -no-color -out=tfplan \
+            -var-file="environments/${TIRAG_ENV}.tfvars" -var "image_tag=${IMAGE_TAG}" | tee plan.txt
+          { echo "### Terraform plan (${TIRAG_ENV})"; echo '```'; tail -n 60 plan.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Terraform apply
+        working-directory: infrastructure/terraform
+        run: terraform apply -input=false -no-color tfplan
+
+      - name: Read stack outputs
+        id: tf
+        working-directory: infrastructure/terraform
+        run: |
+          {
+            echo "db_init=$(terraform output -raw db_init_task_definition)"
+            echo "subnets=$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+            echo "ingest_sg=$(terraform output -raw ingest_security_group_id)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Initialise / migrate the database schema (idempotent one-off task)
+        env:
+          DB_INIT: ${{ steps.tf.outputs.db_init }}
+          SUBNETS: ${{ steps.tf.outputs.subnets }}
+          SG: ${{ steps.tf.outputs.ingest_sg }}
+        run: |
+          task_arn=$(aws ecs run-task --cluster "tirag-${TIRAG_ENV}" --launch-type FARGATE \
+            --task-definition "$DB_INIT" \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "db-init task: $task_arn"
+          aws ecs wait tasks-stopped --cluster "tirag-${TIRAG_ENV}" --tasks "$task_arn"
+          code=$(aws ecs describe-tasks --cluster "tirag-${TIRAG_ENV}" --tasks "$task_arn" \
+                   --query 'tasks[0].containers[0].exitCode' --output text)
+          if [ "$code" != "0" ]; then echo "::error::db-init exited with code ${code}"; exit 1; fi
+
+      # ---- verification ---------------------------------------------------------------------------------
+      - name: Wait for the rollout to finish and verify service health
+        run: |
+          aws ecs wait services-stable --cluster "tirag-${TIRAG_ENV}" --services api
+          read -r state running desired tg < <(aws ecs describe-services --cluster "tirag-${TIRAG_ENV}" --services api \
+            --query 'services[0].[deployments[0].rolloutState,runningCount,desiredCount,loadBalancers[0].targetGroupArn]' --output text)
+          echo "rolloutState=${state} running=${running} desired=${desired}"
+          test "$state" = "COMPLETED" && test "$running" -ge 1 && test "$running" -eq "$desired"
+          healthy=$(aws elbv2 describe-target-health --target-group-arn "$tg" \
+            --query 'length(TargetHealthDescriptions[?TargetHealth.State==`healthy`])' --output text)
+          echo "healthy targets: ${healthy}"
+          test "$healthy" -ge 1
+          { echo "### ${TIRAG_ENV}: rollout ${state}"; echo "image tag \`${IMAGE_TAG}\`, ${running}/${desired} tasks, ${healthy} healthy targets"; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check that the ingest schedule is enabled
+        run: |
+          state=$(aws scheduler get-schedule --name "tirag-${TIRAG_ENV}-ingest" --query State --output text 2>/dev/null || echo NOT_CONFIGURED)
+          echo "ingest schedule: ${state}"
+          echo "ingest schedule: ${state}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: HTTP smoke test (needs the runner to be allowed through the ALB)
+        id: smoke
+        env:
+          SMOKE_BASE_URL: ${{ vars.SMOKE_BASE_URL }}
+          TIRAG_SMOKE_API_KEY: ${{ secrets.TIRAG_SMOKE_API_KEY }}
+        run: |
+          if [ -z "${SMOKE_BASE_URL}" ] || [ -z "${TIRAG_SMOKE_API_KEY}" ]; then
+            echo "::notice::HTTP smoke test skipped: set the environment variable SMOKE_BASE_URL and the environment secret TIRAG_SMOKE_API_KEY (the runner's egress IP must be in alb_ingress_cidrs, or use a self-hosted runner inside the VPN)."
+            echo "HTTP smoke test: SKIPPED (not configured)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 -m venv .smoke && . .smoke/bin/activate
+          pip install --quiet --require-hashes -r requirements.txt
+          python scripts/smoke_test.py "${SMOKE_BASE_URL}" --production
+          echo "HTTP smoke test: PASSED" >> "$GITHUB_STEP_SUMMARY"
+
+      # ---- rollback ---------------------------------------------------------------------------------------
+      # The ECS deployment circuit breaker already rolls back tasks that never become healthy. This step
+      # also covers failures found by the checks above: re-point the service at the previous revision.
+      # (Terraform state then still records the new image tag; re-run the "Rollback" workflow to realign it.)
+      - name: Roll back to the previous task definition
+        if: failure() && steps.prev.outputs.taskdef != ''
+        run: |
+          echo "::warning::Deployment failed verification - rolling back to ${{ steps.prev.outputs.taskdef }}"
+          aws ecs update-service --cluster "tirag-${TIRAG_ENV}" --service api \
+            --task-definition "${{ steps.prev.outputs.taskdef }}" >/dev/null
+          aws ecs wait services-stable --cluster "tirag-${TIRAG_ENV}" --services api
+          echo "### ROLLED BACK to \`${{ steps.prev.outputs.taskdef }}\`" >> "$GITHUB_STEP_SUMMARY"

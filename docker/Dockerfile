@@ -8,6 +8,7 @@
 ARG PYTHON_IMAGE=python:3.11-slim-bookworm
 
 # ---------------------------------------------------------------------------------------------
+# checkov:skip=CKV_DOCKER_7: the tag is pinned in the PYTHON_IMAGE build-arg default (python:3.11-slim-bookworm); CI should override it with a digest
 FROM ${PYTHON_IMAGE} AS builder
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /build
@@ -36,6 +37,7 @@ ENV PATH="/opt/venv/bin:${PATH}" \
 
 # Amazon RDS CA bundle so the database connection can use sslmode=verify-full.
 # To pin it, add: --checksum=sha256:<digest of the bundle you reviewed>
+# checkov:skip=CKV_DOCKER_4: COPY cannot fetch a URL; this downloads the public RDS CA bundle (optionally checksum-pinned, see above)
 ADD --chmod=0444 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/rds/global-bundle.pem
 
 RUN groupadd --system --gid 10001 tirag \

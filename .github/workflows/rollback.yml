@@ -1,0 +1,36 @@
+name: Rollback
+
+# Manually redeploy a previously released image tag (git SHA) to an environment. Goes through the same
+# environment protection (approval for prod) and the same verification as a normal deployment.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to roll back
+        type: choice
+        options: [staging, prod]
+        required: true
+      image_tag:
+        description: Previously deployed image tag (git SHA) to run again
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    uses: ./.github/workflows/_deploy-env.yml
+    with:
+      environment: ${{ inputs.environment }}
+      sha: ${{ inputs.image_tag }}
+      code_ref: ${{ github.sha }}
+      push_image: false
+    permissions:
+      contents: read
+      id-token: write
