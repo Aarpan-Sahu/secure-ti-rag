@@ -81,7 +81,22 @@ _PATTERNS: tuple[_Pattern, ...] = (
         "exfiltrate_secrets",
         3,
         r"\b(send|post|upload|exfiltrate|forward|transmit|email|leak)\b[^.\n]{0,80}"
-        r"\b(api[ _-]?keys?|tokens?|secrets?|credentials?|passwords?|system prompt|conversation)\b",
+        r"\b(api[ _-]?keys?|tokens?|secrets?|credentials?|passwords?)\b[^.\n]{0,40}"
+        r"(\bto\b[^.\n]{0,20}(https?://|\S+@\S+\.\S+)|https?://)",
+    ),
+    _p(
+        "exfiltrate_context",
+        3,
+        r"\b(send|post|upload|exfiltrate|forward|transmit|email|leak)\b[^.\n]{0,80}"
+        r"\b(system prompt|conversation)\b",
+    ),
+    # Analysts legitimately ask how actors steal credentials, so the bare verb + noun is only a
+    # weak signal; it needs a second indicator (or a destination, above) to reach the threshold.
+    _p(
+        "secret_exfil_topic",
+        1,
+        r"\b(send|post|upload|exfiltrate|forward|transmit|email|leak)\b[^.\n]{0,80}"
+        r"\b(api[ _-]?keys?|tokens?|secrets?|credentials?|passwords?)\b",
     ),
     _p(
         "conceal_from_user",
@@ -132,8 +147,21 @@ class InjectionScan:
         return self.score >= INJECTION_THRESHOLD
 
 
+# Lookalike letters (Cyrillic / Greek) that attackers substitute to dodge keyword matching.
+_CONFUSABLES = str.maketrans(
+    "аеорсухіјԁѕԛɡАЕОРСУХІЈЅαεορυνκ",
+    "aeopcyxijdsqgAEOPCYXIJSaeopyvk",
+)
+
+
+def _fold(text: str) -> str:
+    """Fold compatibility forms (full-width etc.) and common homoglyphs to plain ASCII lookalikes."""
+    return unicodedata.normalize("NFKC", text).translate(_CONFUSABLES)
+
+
 def scan_injection(text: str) -> InjectionScan:
     """Score ``text`` for prompt-injection indicators (heuristic)."""
+    text = _fold(text)
     score = 0
     matches: list[str] = []
     for pattern in _PATTERNS:

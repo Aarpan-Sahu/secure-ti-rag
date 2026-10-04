@@ -55,6 +55,14 @@ class InputRejected(HTTPException):
         super().__init__(400, "request rejected by input policy")
 
 
+_HTTP_ERROR_CODES = {
+    404: "not_found",
+    405: "method_not_allowed",
+    413: "payload_too_large",
+    429: "rate_limited",
+    502: "upstream_unavailable",
+}
+
 _bearer_scheme = HTTPBearer(auto_error=False, description="API key or OIDC access token")
 
 
@@ -144,7 +152,7 @@ def create_app(
     async def _http_error(request: Request, exc: StarletteHTTPException):
         return _error(
             exc.status_code,
-            getattr(exc, "code", "http_error"),
+            getattr(exc, "code", _HTTP_ERROR_CODES.get(exc.status_code, "http_error")),
             str(exc.detail),
             request,
             getattr(exc, "headers", None),

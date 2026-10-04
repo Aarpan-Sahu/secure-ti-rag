@@ -180,3 +180,24 @@ def test_retrieval_latency_budget_on_a_larger_index() -> None:
     timings.sort()
     p95 = timings[int(len(timings) * 0.95) - 1]
     assert p95 < 0.5, f"p95 retrieval latency {p95:.3f}s"
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [["--max-tlp", "BOGUS"], ["--expires", "next-week"], ["--role", "superuser"]],
+)
+def test_cli_keygen_rejects_invalid_arguments(cli_env, extra) -> None:
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["keygen", "--name", "x", *extra])
+    assert exc.value.code == 2
+
+
+def test_cli_ask_rejects_unknown_tlp(cli_env) -> None:
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["ask", "what is x", "--tlp", "bogus"])
+    assert exc.value.code == 2
+
+
+def test_cli_eval_reports_missing_golden_file(cli_env, capsys) -> None:
+    assert cli.main(["eval", "--golden", "/nonexistent/golden.json"]) == 2
+    assert "golden set not found" in capsys.readouterr().err

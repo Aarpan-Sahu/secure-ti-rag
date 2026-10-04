@@ -250,6 +250,7 @@ def test_rate_limit_returns_429_with_retry_after(fixture_service, creds) -> None
     assert codes[:3] == [200, 200, 200] and codes[-1] == 429
     limited = client.post("/v1/search", json=QUESTION, headers=h["alice"])
     assert int(limited.headers["retry-after"]) >= 1
+    assert limited.json()["error"]["code"] == "rate_limited"
     assert (
         client.post("/v1/search", json=QUESTION, headers=h["gary"]).status_code == 200
     )  # per principal
