@@ -1,5 +1,6 @@
-# Trivy misconfiguration suppressions that inline #trivy:ignore comments cannot express
-# (count-expanded resources are not matched by them). Keep each entry scoped to a path.
+# Trivy misconfiguration suppressions, loaded via TRIVY_IGNOREFILE in the CI secret-scan step
+# (Trivy's default ignore file is the plain-text .trivyignore, which cannot scope by path).
+# Keep each entry scoped to a path.
 misconfigurations:
   - id: AVD-AWS-0102
     paths:
@@ -11,3 +12,11 @@ misconfigurations:
     paths:
       - infrastructure/terraform/modules/network/main.tf
     statement: Same as above (short-ID form).
+  - id: AVD-AWS-0053
+    paths:
+      - infrastructure/terraform/modules/app/alb.tf
+    statement: The internet-facing ALB is the intended public entrypoint; WAF and TLS front it.
+  - id: AVD-AWS-0132
+    paths:
+      - infrastructure/terraform/modules/app/logs.tf
+    statement: ALB access-log delivery does not support SSE-KMS; SSE-S3 (AES256) is the only supported option.
