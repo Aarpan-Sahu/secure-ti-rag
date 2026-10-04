@@ -158,8 +158,6 @@ resource "aws_network_acl_rule" "data_in_internal" {
   cidr_block     = local.data_net[count.index]
 }
 
-# intra-data-tier only (RDS Multi-AZ replication); app-tier access is limited to 5432
-#trivy:ignore:AVD-AWS-0102
 resource "aws_network_acl_rule" "data_out_ephemeral" {
   count          = var.az_count
   network_acl_id = aws_network_acl.data.id
@@ -183,8 +181,6 @@ resource "aws_network_acl_rule" "data_out_internal" {
 }
 
 # --- VPC endpoints: AWS APIs without internet egress ------------------------------------------------
-# intra-data-tier only (RDS Multi-AZ replication); app-tier access is limited to 5432
-#trivy:ignore:AVD-AWS-0102
 resource "aws_security_group" "endpoints" {
   name_prefix = "${var.name}-vpce-"
   description = "Interface VPC endpoints: HTTPS from the app tier only"
