@@ -45,6 +45,11 @@ RUN groupadd --system --gid 10001 tirag \
 
 COPY --from=builder /opt/venv /opt/venv
 
+# The runtime never installs anything: drop pip/setuptools/wheel (and the copies vendored inside
+# them) from the base interpreter and the venv, removing their CVE surface from the image.
+RUN python -m pip uninstall -y pip setuptools wheel \
+ && /opt/venv/bin/python -m pip uninstall -y pip setuptools wheel
+
 USER 10001:10001
 WORKDIR /tmp
 EXPOSE 8080

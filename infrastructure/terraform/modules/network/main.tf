@@ -148,6 +148,7 @@ resource "aws_network_acl_rule" "data_in_postgres" {
 
 # Multi-AZ replication traffic stays within the data subnets.
 resource "aws_network_acl_rule" "data_in_internal" {
+  #trivy:ignore:AVD-AWS-0102 -- intra-data-tier only (RDS Multi-AZ replication); app-tier access is limited to 5432
   #checkov:skip=CKV_AWS_352: data subnets hold only RDS interfaces; intra-tier traffic must stay open so Multi-AZ replication cannot be broken by a NACL. App-tier access is restricted to 5432 in the rules above
   count          = var.az_count
   network_acl_id = aws_network_acl.data.id
@@ -171,6 +172,7 @@ resource "aws_network_acl_rule" "data_out_ephemeral" {
 }
 
 resource "aws_network_acl_rule" "data_out_internal" {
+  #trivy:ignore:AVD-AWS-0102 -- intra-data-tier only (RDS Multi-AZ replication); app-tier access is limited to 5432
   count          = var.az_count
   network_acl_id = aws_network_acl.data.id
   rule_number    = 200 + count.index

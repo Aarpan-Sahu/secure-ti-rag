@@ -50,6 +50,7 @@ resource "aws_route53_record" "alias" {
 
 # --- load balancer ------------------------------------------------------------------------------------
 resource "aws_lb" "this" {
+  #trivy:ignore:AVD-AWS-0053 -- the internet-facing ALB is the intended public entrypoint; WAF and TLS front it
   #checkov:skip=CKV_AWS_150: deletion protection is enabled in prod (var.deletion_protection); staging is deliberately disposable
   name                       = "${var.name}-alb"
   load_balancer_type         = "application"
