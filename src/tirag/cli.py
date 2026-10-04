@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
 from tirag.config import Settings, get_settings
@@ -32,6 +33,20 @@ def _sources(value: str, settings: Settings) -> list[str]:
             raise SystemExit("no sources configured: set TIRAG_MISP_URL and/or TIRAG_OPENCTI_URL")
         return out
     return [value]
+
+
+def _tlp_arg(value: str) -> TLP:
+    """Argparse type: reject unknown TLP labels instead of silently falling back."""
+    if TLP.parse(value, TLP.CLEAR) != TLP.parse(value, TLP.RED):
+        raise argparse.ArgumentTypeError(f"unknown TLP label {value!r}")
+    return TLP.parse(value)
+
+
+def _iso_date(value: str) -> str:
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid ISO date {value!r}") from exc
 
 
 def cmd_db_init(_: argparse.Namespace) -> int:
@@ -91,7 +106,7 @@ def cmd_ask(args: argparse.Namespace) -> int:
 
     settings = get_settings()
     service = build_service(settings)
-    clearance = Clearance(max_tlp=TLP.parse(args.tlp, TLP.CLEAR))
+    clearance = Clearance(max_tlp=args.tlp)
     try:
         result = service.answer(args.question, clearance)
     except GuardrailViolation as exc:
@@ -108,6 +123,12 @@ def cmd_ask(args: argparse.Namespace) -> int:
 def cmd_eval(args: argparse.Namespace) -> int:
     from tirag.evalkit import run_eval
 
+    if not Path(args.golden).is_file():
+        print(
+            f"error: golden set not found: {args.golden} (run from the repo root or pass --golden)",
+            file=sys.stderr,
+        )
+        return 2
     report = run_eval(Path(args.golden), live=args.live)
     print(json.dumps(report.summary(), indent=2))
     for failure in report.failures():
@@ -119,7 +140,7 @@ def cmd_keygen(args: argparse.Namespace) -> int:
     from tirag.security.auth import generate_api_key
 
     key, digest = generate_api_key()
-    entry = {"name": args.name, "sha256": digest, "role": args.role, "max_tlp": args.max_tlp}
+    entry = {"name": args.name, "sha256": digest, "role": args.role, "max_tlp": args.max_tlp.value}
     if args.expires:
         entry["expires"] = args.expires
     print("API key (shown once, store it in your password manager / secret store):")
@@ -150,7 +171,12 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("ask", help="ask a question from the terminal")
     p.add_argument("question")
-    p.add_argument("--tlp", default="GREEN", help="clearance used for retrieval (default GREEN)")
+    p.add_argument(
+        "--tlp",
+        type=_tlp_arg,
+        default=TLP.GREEN,
+        help="clearance used for retrieval (default GREEN)",
+    )
     p.set_defaults(func=cmd_ask)
 
     p = sub.add_parser("eval", help="run the offline RAG evaluation")
@@ -164,8 +190,8 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("keygen", help="mint an API key")
     p.add_argument("--name", required=True)
     p.add_argument("--role", choices=["analyst", "admin"], default="analyst")
-    p.add_argument("--max-tlp", default="GREEN")
-    p.add_argument("--expires", help="ISO date, e.g. 2027-01-31")
+    p.add_argument("--max-tlp", type=_tlp_arg, default=TLP.GREEN)
+    p.add_argument("--expires", type=_iso_date, help="ISO date, e.g. 2027-01-31")
     p.set_defaults(func=cmd_keygen)
 
     args = parser.parse_args(argv)

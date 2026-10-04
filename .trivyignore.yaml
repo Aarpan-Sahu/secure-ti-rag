@@ -1,0 +1,22 @@
+# Trivy misconfiguration suppressions, loaded via TRIVY_IGNOREFILE in the CI secret-scan step
+# (Trivy's default ignore file is the plain-text .trivyignore, which cannot scope by path).
+# Keep each entry scoped to a path.
+misconfigurations:
+  - id: AVD-AWS-0102
+    paths:
+      - infrastructure/terraform/modules/network/main.tf
+    statement: >-
+      Intra-data-tier rules only (aws_network_acl_rule.data_in_internal / data_out_internal) so RDS
+      Multi-AZ replication cannot be broken by the NACL; app-tier access is limited to port 5432.
+  - id: AWS-0102
+    paths:
+      - infrastructure/terraform/modules/network/main.tf
+    statement: Same as above (short-ID form).
+  - id: AVD-AWS-0053
+    paths:
+      - infrastructure/terraform/modules/app/alb.tf
+    statement: The internet-facing ALB is the intended public entrypoint; WAF and TLS front it.
+  - id: AVD-AWS-0132
+    paths:
+      - infrastructure/terraform/modules/app/logs.tf
+    statement: ALB access-log delivery does not support SSE-KMS; SSE-S3 (AES256) is the only supported option.

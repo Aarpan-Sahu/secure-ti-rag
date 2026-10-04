@@ -45,6 +45,18 @@ RUN groupadd --system --gid 10001 tirag \
 
 COPY --from=builder /opt/venv /opt/venv
 
+# The runtime never installs anything: drop pip/setuptools/wheel (and the copies vendored inside
+# them) from the base interpreter and the venv, removing their CVE surface from the image.
+RUN /usr/local/bin/python -m pip uninstall -y pip setuptools wheel \
+ && /opt/venv/bin/python -m pip uninstall -y pip setuptools wheel
+
+# Pick up the fixed libpcre2 (CVE-2026-103111) ahead of the next base-image refresh; remove this once
+# the pinned base image already ships 10.42-1+deb12u2 or later.
+# checkov:skip=CKV_DOCKER_9: targeted security upgrade of a single package; apt lists are removed in the same layer
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends --only-upgrade libpcre2-8-0 \
+ && rm -rf /var/lib/apt/lists/*
+
 USER 10001:10001
 WORKDIR /tmp
 EXPOSE 8080

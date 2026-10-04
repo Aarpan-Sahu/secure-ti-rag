@@ -48,6 +48,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs" {
   }
 }
 
+# ALB access-log delivery does not support SSE-KMS; SSE-S3 (AES256) is the only supported option
+#trivy:ignore:AVD-AWS-0132
 resource "aws_s3_bucket_versioning" "alb_logs" {
   bucket = aws_s3_bucket.alb_logs.id
   versioning_configuration {

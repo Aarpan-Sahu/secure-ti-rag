@@ -143,7 +143,7 @@ EventBridge Scheduler → ECS Fargate task `tirag ingest` → feeds (HTTPS, CIDR
 
 | Check | Result |
 |---|---|
-| Tests | 259 passed, 94.6 % coverage; real PostgreSQL + pgvector (embedded) for 21 store tests |
+| Tests | 274 passed, 94.6 % coverage; real PostgreSQL + pgvector (embedded) for 21 store tests |
 | Offline evaluation (25 cases) | hit-rate@8 1.00, MRR 0.82, 0 TLP leaks, 0 poison leaks, injection block rate 1.00, refusal accuracy 1.00 |
 | Black-box smoke test vs live uvicorn + pgvector | 16/16 |
 | Load test (800 requests, 30-chunk corpus, extractive LLM) | 0 errors; query p95 ≈ 0.34 s; search p95 ≈ 0.58 s |

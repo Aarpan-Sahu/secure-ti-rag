@@ -70,6 +70,8 @@ resource "aws_lb" "this" {
   depends_on = [aws_s3_bucket_policy.alb_logs]
 }
 
+# the internet-facing ALB is the intended public entrypoint; WAF and TLS front it
+#trivy:ignore:AVD-AWS-0053
 resource "aws_lb_target_group" "api" {
   name_prefix          = "tirag-"
   port                 = 8080

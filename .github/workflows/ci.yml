@@ -108,6 +108,8 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
           skip-dirs: .venv,.venv-lock,.git
+        env:
+          TRIVY_IGNOREFILE: .trivyignore.yaml
       - name: Checkov (Terraform, Dockerfile, GitHub Actions)
         uses: bridgecrewio/checkov-action@2f9fbe2d1e51440f8f5c42abc829aad8e9e4faab # v12.3127.0
         with:
