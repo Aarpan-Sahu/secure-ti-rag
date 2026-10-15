@@ -65,7 +65,7 @@ jobs:
         run: pytest --cov --cov-report=xml --cov-report=term -p no:cacheprovider
       - name: Offline RAG evaluation gate (retrieval quality, TLP and poisoning leaks)
         run: tirag eval --min-hit-rate 0.85
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage
           path: coverage.xml
@@ -109,7 +109,7 @@ jobs:
           exit-code: "1"
           skip-dirs: .venv,.venv-lock,.git
       - name: Checkov (Terraform, Dockerfile, GitHub Actions)
-        uses: bridgecrewio/checkov-action@2f9fbe2d1e51440f8f5c42abc829aad8e9e4faab # v12.3127.0
+        uses: bridgecrewio/checkov-action@29be5868bfa968f099ae80169f61f42887494b8f # v12.3133.0
         with:
           directory: .
           framework: terraform,dockerfile,github_actions
